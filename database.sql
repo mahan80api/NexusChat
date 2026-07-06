@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS messages (
     FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (reply_to_id) REFERENCES messages(id) ON DELETE SET NULL,
-    INDEX idx_chat (chat_at),
+    INDEX idx_chat (chat_id, created_at),
     INDEX idx_sender (sender_id)
 ) ENGINE=InnoDB;
 
