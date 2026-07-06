@@ -1,0 +1,28 @@
+# Logs
+logs/
+*.log
+error.log
+
+# Uploads
+assets/uploads/avatars/*
+!assets/uploads/avatars/.gitkeep
+assets/uploads/stories/*
+!assets/uploads/stories/.gitkeep
+assets/uploads/files/*
+!assets/uploads/files/.gitkeep
+assets/uploads/voice/*
+!assets/uploads/voice/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
