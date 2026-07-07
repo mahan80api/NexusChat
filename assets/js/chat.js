@@ -19,6 +19,7 @@ const ChatUI = {
             <div style="display:flex; gap:6px;">
               <button class="icon-btn theme-toggle-btn" id="globalSearchBtn" title="جستجو (Ctrl+K)">🔍</button>
               <button class="icon-btn" id="savedBtn" title="ذخیره‌شده‌ها">⭐</button>
+              <button class="icon-btn" id="statsBtn" title="آمار و تحلیل">📊</button>
               <button class="icon-btn" id="themeBtn" title="تم (Ctrl+Shift+T)">🎨</button>
               <button class="icon-btn" id="dndBtn" title="حالت مزاحم نشوید">🌙</button>
               <button class="icon-btn" id="pushBtn" title="اعلان‌ها (Push)">🔔</button>
@@ -56,6 +57,7 @@ const ChatUI = {
     document.getElementById('themeBtn').addEventListener('click', () => ThemeManager.open());
     document.getElementById('dndBtn').addEventListener('click', () => DNDManager.toggle());
     document.getElementById('pushBtn').addEventListener('click', () => PushUI.open());
+    document.getElementById('statsBtn').addEventListener('click', () => StatsUI.open());
     document.getElementById('savedBtn').addEventListener('click', () => {
       SearchUI.open();
       setTimeout(() => {
@@ -132,7 +134,7 @@ const ChatUI = {
           <div class="story-avatar">
             ${group.user.avatar
               ? `<img src="assets/uploads/avatars/${group.user.avatar}">`
-              : App.getInitials(group.user.display_name)}
+              : App.getInitials(group.user.display_name || group.user.username)}
           </div>
         </div>
         <div class="story-name">${App.escapeHTML(group.user.display_name || group.user.username)}</div>
@@ -775,6 +777,7 @@ const ChatUI = {
       <hr style="margin:20px 0; border-color:var(--glass-border)">
       <button class="btn-secondary" id="changeThemeBtn" style="width:100%;margin-bottom:8px">🎨 تغییر تم</button>
       <button class="btn-secondary" id="openPushBtn" style="width:100%;margin-bottom:8px">🔔 اعلان‌ها</button>
+      <button class="btn-secondary" id="openStatsBtn" style="width:100%;margin-bottom:8px">📊 آمار و تحلیل</button>
       <button class="btn-secondary" id="editProfile" style="width:100%;margin-bottom:8px">✏ ویرایش پروفایل</button>
       <button class="btn-secondary" id="changePassBtn" style="width:100%;margin-bottom:8px">🔒 تغییر رمز</button>
       <button class="btn-secondary" id="logoutFromPanel" style="width:100%">خروج</button>
@@ -784,6 +787,7 @@ const ChatUI = {
     document.getElementById('editProfile').addEventListener('click', () => this.showEditProfile());
     document.getElementById('changeThemeBtn').addEventListener('click', () => { panel.remove(); ThemeManager.open(); });
     document.getElementById('openPushBtn').addEventListener('click', () => { panel.remove(); PushUI.open(); });
+    document.getElementById('openStatsBtn').addEventListener('click', () => { panel.remove(); StatsUI.open(); });
     document.getElementById('changePassBtn').addEventListener('click', () => this.showChangePassword());
     document.getElementById('logoutFromPanel').addEventListener('click', () => App.logout());
   },
