@@ -23,6 +23,7 @@ $userTheme = $currentUser['theme'] ?? 'galaxy';
     <link rel="stylesheet" href="assets/css/themes.css">
     <link rel="stylesheet" href="assets/css/dnd.css">
     <link rel="stylesheet" href="assets/css/link_preview.css">
+    <link rel="stylesheet" href="assets/css/stickers.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>">
     <meta name="user-id" content="<?= $currentUser['id'] ?>">
     <meta name="user-theme" content="<?= htmlspecialchars($userTheme) ?>">
@@ -48,6 +49,7 @@ $userTheme = $currentUser['theme'] ?? 'galaxy';
     <script src="assets/js/theme.js"></script>
     <script src="assets/js/dnd.js"></script>
     <script src="assets/js/link_preview.js"></script>
+    <script src="assets/js/stickers.js"></script>
     <script src="assets/js/chat.js"></script>
     <script>
     App.currentUser = window.currentUser;
@@ -64,8 +66,9 @@ $userTheme = $currentUser['theme'] ?? 'galaxy';
             ChatUI.start();
         }, 300);
 
-        if (window.ThemeManager) ThemeManager.init();
-        if (window.DNDManager)   DNDManager.init();
+        if (window.ThemeManager)   ThemeManager.init();
+        if (window.DNDManager)     DNDManager.init();
+        if (window.StickerUI)      StickerUI.init();
 
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
