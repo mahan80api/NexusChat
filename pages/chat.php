@@ -37,9 +37,9 @@ $currentUser = (new User())->findById($_SESSION['user_id']);
     ], JSON_UNESCAPED_UNICODE) ?>;
     </script>
     <script src="assets/js/galaxy.js"></script>
+    <script src="assets/js/voice.js"></script>
     <script src="assets/js/chat.js"></script>
     <script>
-    // Inject current user into App before chat init
     App.currentUser = window.currentUser;
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
