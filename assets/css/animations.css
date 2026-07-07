@@ -1,0 +1,35 @@
+/* NexusChat - Cosmic Animations */
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes glow { 0%, 100% { box-shadow: 0 0 8px var(--accent); } 50% { box-shadow: 0 0 24px var(--accent), 0 0 40px var(--accent-2); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+@keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+@keyframes drift { from { transform: translate(0, 0); } to { transform: translate(-100px, 100px); } }
+@keyframes message-in { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes typing-dot { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-6px); opacity: 1; } }
+@keyframes send-burst { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
+@keyframes progress-bar { from { width: 0; } to { width: 100%; } }
+@keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+/* Cosmic background */
+.cosmic-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--bg-deep); }
+.starfield { position: absolute; inset: 0; background-image: radial-gradient(1px 1px at 25% 25%, white, transparent), radial-gradient(1px 1px at 50% 50%, white, transparent), radial-gradient(2px 2px at 75% 75%, #ddd, transparent), radial-gradient(1px 1px at 10% 90%, #fff, transparent), radial-gradient(1px 1px at 80% 10%, white, transparent); background-size: 200px 200px, 300px 300px, 400px 400px, 250px 250px, 350px 350px; animation: drift 100s linear infinite; opacity: 0.6; }
+.nebula { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; pointer-events: none; }
+.nebula-1 { width: 600px; height: 600px; top: -200px; right: -200px; background: var(--accent); animation: float 20s ease-in-out infinite; }
+.nebula-2 { width: 500px; height: 500px; bottom: -150px; left: -150px; background: var(--accent-2); animation: float 25s ease-in-out infinite reverse; }
+.nebula-3 { width: 400px; height: 400px; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--accent-3); animation: float 30s ease-in-out infinite; opacity: 0.2; }
+.particles { position: absolute; inset: 0; background-image: radial-gradient(circle, var(--accent) 1px, transparent 1px); background-size: 50px 50px; opacity: 0.1; animation: drift 60s linear infinite; }
+
+.float { animation: float 3s ease-in-out infinite; }
+.pulse { animation: pulse 2s ease-in-out infinite; }
+.glow { animation: glow 2s ease-in-out infinite; }
+.shake { animation: shake 0.3s ease-in-out; }
+.fade-in { animation: fadeIn 0.3s ease-out; }
+.slide-up { animation: slideUp 0.4s ease-out; }
+.slide-in { animation: slideIn 0.3s ease-out; }
+.message-in { animation: message-in 0.3s ease-out; }
+.twinkle { animation: twinkle 2s ease-in-out infinite; }
