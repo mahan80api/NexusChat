@@ -1,0 +1,285 @@
+/* ============================================
+   📍 Locations UI
+   ============================================ */
+
+.location-share-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.location-share-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.location-share-option:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: var(--gold);
+  transform: translateX(-3px);
+}
+
+.location-share-icon {
+  font-size: 32px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-cosmic);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.location-share-info { flex: 1; }
+.location-share-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 2px;
+}
+.location-share-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* Saved places */
+.saved-places-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  margin: 12px 0;
+}
+.saved-place-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.saved-place-item:hover {
+  background: rgba(212, 175, 55, 0.05);
+  border-color: var(--gold);
+}
+.saved-place-icon {
+  font-size: 28px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-cosmic);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+.saved-place-info { flex: 1; min-width: 0; }
+.saved-place-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+.saved-place-addr {
+  font-size: 12px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Nearby */
+.nearby-categories {
+  display: flex;
+  gap: 6px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+.nearby-cat-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-dim);
+  transition: all 0.2s;
+}
+.nearby-cat-chip:hover, .nearby-cat-chip.active {
+  background: var(--gradient-gold);
+  color: #1a0030;
+  border-color: var(--gold);
+}
+
+.nearby-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  margin: 12px 0;
+}
+.nearby-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.nearby-item:hover {
+  background: rgba(212, 175, 55, 0.05);
+  border-color: var(--gold);
+  transform: translateX(-2px);
+}
+.nearby-item-icon {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(212, 175, 55, 0.1);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.nearby-item-info { flex: 1; min-width: 0; }
+.nearby-item-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+}
+.nearby-item-cat {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.nearby-item-dist {
+  font-size: 12px;
+  color: var(--gold);
+  background: rgba(212, 175, 55, 0.1);
+  padding: 3px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+/* Map viewer */
+.map-viewer {
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  background: #0a0118;
+}
+.map-viewer iframe {
+  display: block;
+}
+
+.map-coords {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin: 8px 0;
+  font-size: 13px;
+  color: white;
+}
+
+/* Live location indicator */
+.live-location-banner {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.2), transparent);
+  border-left: 3px solid #ef4444;
+  padding: 8px 12px;
+  margin: 8px 0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: pulse 2s infinite;
+}
+.live-location-banner .live-dot {
+  width: 8px; height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulseDot 1.5s infinite;
+}
+.live-location-banner .live-text {
+  font-size: 13px;
+  color: white;
+}
+
+/* Location message in chat */
+.message-location {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 4px;
+  cursor: pointer;
+}
+.message-location-preview {
+  width: 100%;
+  height: 180px;
+  background: var(--gradient-cosmic);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.message-location-preview::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.03) 20px, rgba(255,255,255,0.03) 40px),
+    radial-gradient(circle at center, rgba(212,175,55,0.3), transparent);
+}
+.message-location-pin {
+  font-size: 36px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+  z-index: 1;
+  animation: bounce 1.5s infinite;
+}
+.message-location-info {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.message-location-name {
+  font-weight: 600;
+  color: white;
+}
+.message-location-coords {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: monospace;
+  margin-top: 2px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+@keyframes pulseDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@media (max-width: 600px) {
+  .location-share-icon { font-size: 24px; width: 44px; height: 44px; }
+  .saved-place-icon { font-size: 22px; width: 40px; height: 40px; }
+  .nearby-item { padding: 8px; }
+  .message-location-preview { height: 140px; }
+}
