@@ -17,8 +17,10 @@ const ChatUI = {
           <div class="sidebar-header">
             <div class="sidebar-title gold-text">🌌 NexusChat</div>
             <div style="display:flex; gap:6px;">
-              <button class="icon-btn" id="globalSearchBtn" title="جستجو (Ctrl+K)">🔍</button>
+              <button class="icon-btn theme-toggle-btn" id="globalSearchBtn" title="جستجو (Ctrl+K)">🔍</button>
               <button class="icon-btn" id="savedBtn" title="ذخیره‌شده‌ها">⭐</button>
+              <button class="icon-btn" id="themeBtn" title="تم (Ctrl+Shift+T)">🎨</button>
+              <button class="icon-btn" id="dndBtn" title="حالت مزاحم نشوید">🌙</button>
               <button class="icon-btn" id="newChatBtn" title="چت جدید">✚</button>
               <button class="icon-btn" id="profileBtn" title="پروفایل">👤</button>
               <button class="icon-btn" id="logoutBtn" title="خروج">⏻</button>
@@ -37,7 +39,9 @@ const ChatUI = {
             <h2>به کهکشان خوش آمدید</h2>
             <p>یک گفتگو را انتخاب کنید یا چت جدیدی شروع کنید</p>
             <div style="margin-top:16px; font-size:13px;">
-              <span class="kbd-shortcut">Ctrl</span> + <span class="kbd-shortcut">K</span> برای جستجوی سریع
+              <span class="kbd-shortcut">Ctrl</span> + <span class="kbd-shortcut">K</span> جستجوی سریع
+              <br>
+              <span class="kbd-shortcut">Ctrl</span> + <span class="kbd-shortcut">Shift</span> + <span class="kbd-shortcut">T</span> تغییر تم
             </div>
           </div>
         </main>
@@ -48,6 +52,8 @@ const ChatUI = {
     document.getElementById('profileBtn').addEventListener('click',  () => this.showProfilePanel());
     document.getElementById('logoutBtn').addEventListener('click',   () => App.logout());
     document.getElementById('globalSearchBtn').addEventListener('click', () => SearchUI.open());
+    document.getElementById('themeBtn').addEventListener('click', () => ThemeManager.open());
+    document.getElementById('dndBtn').addEventListener('click', () => DNDManager.toggle());
     document.getElementById('savedBtn').addEventListener('click', () => {
       SearchUI.open();
       setTimeout(() => {
@@ -64,6 +70,35 @@ const ChatUI = {
       if (q.length < 2) { this.renderChats(App.chats); return; }
       searchTimeout = setTimeout(() => this.searchUsers(q), 300);
     });
+
+    // Update theme button icon to current theme
+    const updateThemeIcon = () => {
+      const btn = document.getElementById('themeBtn');
+      if (btn && window.ThemeManager) {
+        const theme = ThemeManager.themes[ThemeManager.current];
+        btn.textContent = theme ? theme.icon : '🎨';
+        btn.title = 'تم فعلی: ' + (theme ? theme.name : '') + ' (Ctrl+Shift+T)';
+      }
+    };
+    updateThemeIcon();
+    setInterval(updateThemeIcon, 1000);
+
+    // Update DND icon
+    const updateDndIcon = () => {
+      const btn = document.getElementById('dndBtn');
+      if (btn && window.DNDManager) {
+        btn.textContent = DNDManager.enabled ? '🔕' : '🌙';
+        btn.style.color = DNDManager.enabled ? '#ef4444' : '';
+      }
+    };
+    updateDndIcon();
+    setInterval(updateDndIcon, 1000);
+  },
+
+  toFormData(obj) {
+    const fd = new FormData();
+    Object.entries(obj).forEach(([k, v]) => fd.append(k, v));
+    return fd;
   },
 
   // ============ Stories ============
@@ -154,12 +189,6 @@ const ChatUI = {
       setTimeout(close, 5000);
     };
     show();
-  },
-
-  toFormData(obj) {
-    const fd = new FormData();
-    Object.entries(obj).forEach(([k, v]) => fd.append(k, v));
-    return fd;
   },
 
   // ============ Chat list ============
@@ -266,7 +295,6 @@ const ChatUI = {
       }, 200);
     });
 
-    // Voice button
     document.getElementById('voiceBtn').addEventListener('click', () => {
       if (VoiceRecorder.isRecording) VoiceRecorder.stop();
       else VoiceRecorder.start();
@@ -677,12 +705,16 @@ const ChatUI = {
         ${u.bio ? `<p style="margin-top:8px">${App.escapeHTML(u.bio)}</p>` : ''}
       </div>
       <hr style="margin:20px 0; border-color:var(--glass-border)">
+      <button class="btn-secondary" id="changeThemeBtn" style="width:100%;margin-bottom:8px">🎨 تغییر تم</button>
       <button class="btn-secondary" id="editProfile" style="width:100%;margin-bottom:8px">✏ ویرایش پروفایل</button>
+      <button class="btn-secondary" id="changePassBtn" style="width:100%;margin-bottom:8px">🔒 تغییر رمز</button>
       <button class="btn-secondary" id="logoutFromPanel" style="width:100%">خروج</button>
     `;
     document.getElementById('chatMain').appendChild(panel);
     document.getElementById('closeProfile').addEventListener('click', () => panel.remove());
     document.getElementById('editProfile').addEventListener('click', () => this.showEditProfile());
+    document.getElementById('changeThemeBtn').addEventListener('click', () => { panel.remove(); ThemeManager.open(); });
+    document.getElementById('changePassBtn').addEventListener('click', () => this.showChangePassword());
     document.getElementById('logoutFromPanel').addEventListener('click', () => App.logout());
   },
 
@@ -711,6 +743,28 @@ const ChatUI = {
         App.closeModal();
         document.querySelector('.profile-panel')?.remove();
       }
+    });
+  },
+
+  showChangePassword() {
+    const html = `
+      <h3 class="modal-title">🔒 تغییر رمز عبور</h3>
+      <form id="passForm">
+        <input class="auth-input" type="password" name="old_password" placeholder="رمز فعلی" required>
+        <input class="auth-input" type="password" name="new_password" placeholder="رمز جدید (حداقل ۶ کاراکتر)" required>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="App.closeModal()">انصراف</button>
+          <button type="submit" class="btn-primary" style="width:auto; padding:10px 24px;">تغییر</button>
+        </div>
+      </form>
+    `;
+    App.showModal(html);
+    document.getElementById('passForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const res = await App.api('users', 'change_password', fd);
+      if (res.success) { App.toast('رمز تغییر کرد 🔒', 'success'); App.closeModal(); }
+      else App.toast(res.message || 'خطا', 'error');
     });
   },
 
