@@ -1,0 +1,249 @@
+/* ============================================
+   🤖 Bot System UI
+   ============================================ */
+
+.bot-store-modal,
+.bot-info-modal,
+.create-bot-modal,
+.edit-bot-modal,
+.my-bots-modal { max-width: 700px; width: 95%; }
+
+.bot-store-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  margin: 12px 0;
+}
+
+.bot-store-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.bot-store-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--gold);
+  transform: translateX(-2px);
+}
+
+.bot-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--gradient-cosmic);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+.bot-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bot-info { flex: 1; min-width: 0; }
+.bot-name { font-size: 15px; font-weight: 600; color: white; }
+.bot-username {
+  font-size: 12px;
+  color: var(--gold);
+  font-family: 'Courier New', monospace;
+  margin: 2px 0;
+}
+.bot-description {
+  font-size: 12px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.bot-stats-mini, .bot-meta {
+  font-size: 12px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+/* Bot info detail */
+.bot-info-detail { padding: 0 4px; }
+.bot-info-detail h4 {
+  margin: 16px 0 8px;
+  font-size: 14px;
+  color: var(--gold);
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 4px;
+}
+
+.bot-token-section {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  margin: 12px 0;
+}
+.bot-token-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--gold);
+  word-break: break-all;
+}
+.bot-token-display code { flex: 1; }
+
+.bot-commands-list { display: flex; flex-direction: column; gap: 6px; }
+.bot-command-item {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-right: 3px solid var(--gold);
+}
+.bot-command-name {
+  font-family: 'Courier New', monospace;
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 13px;
+}
+.bot-command-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.bot-commands-edit { display: flex; flex-direction: column; gap: 6px; }
+.bot-command-edit-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-border);
+}
+.bot-command-edit-item strong {
+  font-family: 'Courier New', monospace;
+  color: var(--gold);
+  font-size: 13px;
+}
+.inline-badge {
+  font-size: 10px;
+  background: var(--gradient-cosmic);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* Bot stats */
+.bot-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+.bot-stat-card {
+  background: var(--gradient-cosmic);
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid var(--glass-border);
+}
+.bot-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.bot-stat-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.btn-secondary.danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.btn-secondary.danger:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+/* Inline picker in chat */
+.inline-bot-picker {
+  position: absolute;
+  bottom: 60px;
+  left: 12px;
+  right: 12px;
+  background: linear-gradient(180deg, #1a0030, #0a0118);
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+}
+.inline-bot-result {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--glass-border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.2s;
+}
+.inline-bot-result:hover { background: rgba(255, 255, 255, 0.05); }
+.inline-bot-result-icon {
+  width: 32px; height: 32px;
+  background: var(--gradient-cosmic);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.inline-bot-result-content { flex: 1; min-width: 0; }
+.inline-bot-result-title { font-size: 13px; font-weight: 500; color: white; }
+.inline-bot-result-desc { font-size: 11px; color: var(--text-dim); }
+
+/* Bot message style */
+.bot-message {
+  position: relative;
+}
+.bot-message::before {
+  content: '🤖';
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  background: var(--gradient-gold);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  border: 2px solid #1a0030;
+}
+
+@media (max-width: 600px) {
+  .bot-avatar { width: 40px; height: 40px; font-size: 18px; }
+  .bot-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .bot-stat-card { padding: 14px; }
+  .bot-stat-value { font-size: 22px; }
+}
