@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="cosmic">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusChat - دموی زنده</title>
+    <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg">
+    <link rel="stylesheet" href="assets/css/themes.css">
+    <link rel="stylesheet" href="assets/css/animations.css">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/chat.css">
+    <link rel="stylesheet" href="assets/css/modal.css">
+    <link rel="stylesheet" href="assets/css/wallet.css">
+    <link rel="stylesheet" href="assets/css/auth.css">
+    <style>
+        body { position: relative; }
+        .demo-badge { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gradient-cosmic); color: white; padding: 8px 20px; border-radius: 20px; z-index: 1000; font-weight: 600; box-shadow: var(--shadow-glow); font-size: 13px; }
+        .demo-tabs { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; background: var(--bg-elevated); padding: 4px; border-radius: 12px; z-index: 1000; border: 1px solid var(--glass-border); }
+        .demo-tab { padding: 6px 14px; background: transparent; border: none; color: var(--text-muted); border-radius: 8px; cursor: pointer; font-size: 12px; }
+        .demo-tab.active { background: var(--accent); color: white; }
+        .theme-switcher { position: fixed; bottom: 90px; left: 20px; display: flex; flex-direction: column; gap: 4px; z-index: 1000; background: var(--bg-elevated); padding: 8px; border-radius: 12px; border: 1px solid var(--glass-border); }
+        .theme-btn { width: 28px; height: 28px; border: 2px solid var(--glass-border); border-radius: 50%; cursor: pointer; transition: var(--transition); }
+        .theme-btn:hover { transform: scale(1.15); }
+        .theme-btn.active { border-color: white; }
+        .t-cosmic { background: linear-gradient(135deg, #8b5cf6, #ec4899); }
+        .t-ocean { background: linear-gradient(135deg, #06b6d4, #3b82f6); }
+        .t-forest { background: linear-gradient(135deg, #10b981, #84cc16); }
+        .t-sunset { background: linear-gradient(135deg, #f59e0b, #ec4899); }
+        .t-matrix { background: linear-gradient(135deg, #10b981, #84cc16); }
+        .t-pink { background: linear-gradient(135deg, #ec4899, #f472b6); }
+        .t-aurora { background: linear-gradient(135deg, #06b6d4, #10b981, #8b5cf6); }
+        .t-light { background: linear-gradient(135deg, #7c3aed, #db2777); }
+    </style>
+</head>
+<body class="cosmic-theme">
+    <div class="cosmic-bg">
+        <div class="starfield"></div>
+        <div class="nebula nebula-1"></div>
+        <div class="nebula nebula-2"></div>
+        <div class="nebula nebula-3"></div>
+        <div class="particles"></div>
+    </div>
+
+    <div class="demo-badge">✨ NexusChat - Live Demo</div>
+    <div class="demo-tabs">
+        <button class="demo-tab active" data-screen="welcome">خوش‌آمدید</button>
+        <button class="demo-tab" data-screen="login">ورود</button>
+        <button class="demo-tab" data-screen="chat">چت</button>
+        <button class="demo-tab" data-screen="wallet">کیف پول</button>
+    </div>
+
+    <div class="theme-switcher">
+        <div class="theme-btn t-cosmic active" data-theme="cosmic" title="Cosmic"></div>
+        <div class="theme-btn t-ocean" data-theme="ocean" title="Ocean"></div>
+        <div class="theme-btn t-forest" data-theme="forest" title="Forest"></div>
+        <div class="theme-btn t-sunset" data-theme="sunset" title="Sunset"></div>
+        <div class="theme-btn t-matrix" data-theme="matrix" title="Matrix"></div>
+        <div class="theme-btn t-pink" data-theme="pink" title="Pink"></div>
+        <div class="theme-btn t-aurora" data-theme="aurora" title="Aurora"></div>
+        <div class="theme-btn t-light" data-theme="light" title="Light"></div>
+    </div>
+
+    <!-- Welcome screen -->
+    <div class="app-shell" id="screen-welcome">
+        <div class="chat-area" style="flex:1;display:flex;align-items:center;justify-content:center;">
+            <div class="welcome-content" style="text-align:center;">
+                <div class="welcome-logo">✨</div>
+                <h1 style="font-size:48px;margin:0 0 12px;background:var(--gradient-cosmic);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">NexusChat</h1>
+                <p style="color:var(--text-muted);font-size:18px;margin:0 0 32px;">پیام‌رسان کیهانی — تجربه‌ای فراتر از یک چت ساده</p>
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                    <button class="btn-primary" style="width:auto;padding:12px 32px;" onclick="showScreen('login')">🚀 شروع کنید</button>
+                    <button class="btn-secondary" style="padding:12px 32px;" onclick="showScreen('chat')">👁 مشاهده چت</button>
+                </div>
+                <div style="margin-top:48px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:600px;">
+                    <div class="stat-card"><div style="font-size:32px;">💬</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px;">پیام‌رسانی فوری</div></div>
+                    <div class="stat-card"><div style="font-size:32px;">📞</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px;">تماس صوتی و تصویری</div></div>
+                    <div class="stat-card"><div style="font-size:32px;">💰</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px;">کیف پول چند ارزی</div></div>
+                    <div class="stat-card"><div style="font-size:32px;">🤖</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px;">ربات‌های هوشمند</div></div>
+                    <div class="stat-card"><div style="font-size:32px;">📢</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px;">کانال‌های عمومی</div></div>
+                    <div class="stat-card"><div style="font-size:32px;">🔒</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px;">رمزگذاری سرتاسری</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login screen -->
+    <div id="screen-login" style="display:none;">
+        <div class="auth-container">
+            <div class="auth-card glass">
+                <div class="auth-header">
+                    <div class="auth-logo">✨</div>
+                    <h1>NexusChat</h1>
+                    <p class="auth-subtitle">پیام‌رسان کیهانی</p>
+                </div>
+                <div class="auth-tabs">
+                    <button class="auth-tab active">ورود</button>
+                    <button class="auth-tab">ثبت‌نام</button>
+                </div>
+                <form class="auth-form" onsubmit="event.preventDefault();showScreen('chat');">
+                    <div class="form-group">
+                        <label>نام کاربری</label>
+                        <input type="text" placeholder="username" value="mahan">
+                    </div>
+                    <div class="form-group">
+                        <label>رمز عبور</label>
+                        <input type="password" placeholder="••••••••" value="password">
+                    </div>
+                    <button type="submit" class="btn-primary auth-submit">ورود به NexusChat</button>
+                </form>
+                <div class="auth-footer">
+                    <small>تجربه‌ای فراتر از یک پیام‌رسان ساده ✨</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat screen -->
+    <div id="screen-chat" style="display:none;">
+        <div class="app-shell">
+            <aside class="sidebar" id="sidebar" style="position:relative;">
+                <div class="sidebar-header">
+                    <div class="logo">
+                        <span class="logo-icon">✨</span>
+                        <span class="logo-text">NexusChat</span>
+                    </div>
+                    <button class="icon-btn">☰</button>
+                </div>
+                <div class="sidebar-search">
+                    <input type="search" placeholder="🔍 جستجو...">
+                </div>
+                <div class="sidebar-tabs">
+                    <button class="tab-btn active">💬 چت‌ها</button>
+                    <button class="tab-btn">📢 کانال‌ها</button>
+                    <button class="tab-btn">👥 مخاطبان</button>
+                </div>
+                <div class="sidebar-content">
+                    <div id="chatList" class="chat-list"></div>
+                </div>
+                <div class="sidebar-footer">
+                    <button class="icon-btn">✏️</button>
+                    <button class="icon-btn">📊</button>
+                    <button class="icon-btn">🎨</button>
+                    <button class="icon-btn">🌙</button>
+                    <button class="icon-btn">💰</button>
+                </div>
+            </aside>
+
+            <main class="chat-area">
+                <div class="chat-container">
+                    <header class="chat-header">
+                        <div class="chat-header-info">
+                            <img class="avatar" src="assets/img/default-avatar.svg">
+                            <div>
+                                <div class="chat-title">سارا محمدی</div>
+                                <div class="chat-status">🟢 آنلاین</div>
+                            </div>
+                        </div>
+                        <div class="chat-header-actions">
+                            <button class="icon-btn">📞</button>
+                            <button class="icon-btn">📹</button>
+                            <button class="icon-btn">🔍</button>
+                            <button class="icon-btn">⋮</button>
+                        </div>
+                    </header>
+                    <div class="messages" id="messages"></div>
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <footer class="composer">
+                        <div class="composer-actions">
+                            <button class="icon-btn">😊</button>
+                            <button class="icon-btn">📎</button>
+                            <button class="icon-btn">🎤</button>
+                            <button class="icon-btn">😀</button>
+                            <button class="icon-btn">📊</button>
+                        </div>
+                        <textarea placeholder="پیام خود را بنویسید..." rows="1"></textarea>
+                        <button class="send-btn">➤</button>
+                    </footer>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Wallet screen -->
+    <div id="screen-wallet" style="display:none;">
+        <div class="modal-backdrop" style="display:flex;position:relative;background:transparent;backdrop-filter:none;padding:40px;">
+            <div class="modal" style="max-width:800px;width:100%;">
+                <h3 class="modal-title">💰 کیف پول من</h3>
+                <div class="stats-grid" style="margin-bottom:24px;">
+                    <div class="stat-card"><div class="stat-value">۱۲,۵۰۰,۰۰۰</div><div class="stat-label">IRR تومان</div></div>
+                    <div class="stat-card"><div class="stat-value">$320</div><div class="stat-label">USD</div></div>
+                    <div class="stat-card"><div class="stat-value">₿ 0.05</div><div class="stat-label">Bitcoin</div></div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;">
+                    <div class="wallet-card"><div class="wallet-currency">IRR</div><div class="wallet-balance">12,500,000</div><div class="wallet-number">WAL00000001ABC123</div></div>
+                    <div class="wallet-card"><div class="wallet-currency">USD</div><div class="wallet-balance">$320.50</div><div class="wallet-number">WAL00000001DEF456</div></div>
+                    <div class="wallet-card"><div class="wallet-currency">EUR</div><div class="wallet-balance">€150.00</div><div class="wallet-number">WAL00000001GHI789</div></div>
+                    <div class="wallet-card"><div class="wallet-currency">BTC</div><div class="wallet-balance">₿ 0.05</div><div class="wallet-number">WAL00000001JKL012</div></div>
+                    <div class="wallet-card"><div class="wallet-currency">ETH</div><div class="wallet-balance">Ξ 1.5</div><div class="wallet-number">WAL00000001MNO345</div></div>
+                    <div class="wallet-card"><div class="wallet-currency">TON</div><div class="wallet-balance">◈ 200</div><div class="wallet-number">WAL00000001PQR678</div></div>
+                    <div class="wallet-card"><div class="wallet-currency">USDT</div><div class="wallet-balance">₮ 500</div><div class="wallet-number">WAL00000001STU901</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme switcher
+        document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click', () => {
+            document.querySelectorAll('.theme-btn').forEach(x => x.classList.remove('active'));
+            b.classList.add('active');
+            document.documentElement.dataset.theme = b.dataset.theme;
+        }));
+
+        // Screen switcher
+        function showScreen(name) {
+            ['welcome', 'login', 'chat', 'wallet'].forEach(s => {
+                document.getElementById('screen-' + s).style.display = 'none';
+            });
+            document.getElementById('screen-' + name).style.display = 'block';
+            document.querySelectorAll('.demo-tab').forEach(t => t.classList.toggle('active', t.dataset.screen === name));
+            if (name === 'chat') setTimeout(() => {
+                renderChats(); renderMessages();
+                const ta = document.querySelector('textarea');
+                ta.addEventListener('input', e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'; });
+            }, 100);
+        }
+        document.querySelectorAll('.demo-tab').forEach(t => t.addEventListener('click', () => showScreen(t.dataset.screen)));
+
+        // Demo chats
+        const chats = [
+            { id: 1, name: 'سارا محمدی', preview: 'عالیه! ممنون از خبرت ✨', time: 'هم اکنون', unread: 2, online: true },
+            { id: 2, name: 'گروه دوستان', preview: 'علی: فردا کافه بریم؟', time: '۱۰ دقیقه پیش', unread: 0, online: false },
+            { id: 3, name: 'Tech Iran', preview: '🚀 کانال فناوری ایران', time: '۲ ساعت پیش', unread: 0, online: false, channel: true },
+            { id: 4, name: 'مادر ❤️', preview: 'بیا خونه', time: 'دیروز', unread: 1, online: true },
+            { id: 5, name: 'استاد کریمی', preview: 'پروژه رو تا فردا بفرست', time: 'دیروز', unread: 0, online: false },
+            { id: 6, name: 'ربات پشتیبانی', preview: 'چطور کمکتون کنم؟', time: '۳ روز پیش', unread: 0, online: true, bot: true },
+        ];
+
+        function renderChats() {
+            const el = document.getElementById('chatList');
+            el.innerHTML = chats.map(c => `
+                <div class="chat-item">
+                    <div class="chat-avatar">
+                        <img class="avatar" src="assets/img/default-avatar.svg">
+                        <span class="online-dot ${c.online ? '' : 'offline'}"></span>
+                    </div>
+                    <div class="chat-info">
+                        <div class="chat-name">${c.name}</div>
+                        <div class="chat-preview">${c.preview}</div>
+                    </div>
+                    <div class="chat-meta">
+                        <span class="chat-time">${c.time}</span>
+                        ${c.unread > 0 ? `<span class="unread-badge">${c.unread}</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Demo messages
+        const messages = [
+            { in: false, content: 'سلام! حالت چطوره؟ 😊', time: '۱۰:۲۰' },
+            { in: true, content: 'سلام سارا! ممنون خوبم، تو چطوری؟ ✨', time: '۱۰:۲۲' },
+            { in: false, content: 'منم خوبم! یه خبر خوب دارم برات', time: '۱۰:۲۳' },
+            { in: true, content: 'بگو بگو چیه؟ 👀', time: '۱۰:۲۳' },
+            { in: false, content: 'NexusChat رو دیدی؟ پیام‌رسان کیهانی که میگفتم، الان launch شد! 🚀', time: '۱۰:۲۵' },
+            { in: true, content: 'آره دیدم! واقعاً فوق‌العاده‌ست. اون انیمیشن‌های کهکشانیش محشره 😍', time: '۱۰:۲۷' },
+            { in: false, content: 'میدونی چی جالبه؟ کیف پولش ۷ ارز مختلف داره. حتی کریپتو! 💰', time: '۱۰:۲۸' },
+            { in: true, content: 'عالیه! ممنون از خبرت ✨', time: '۱۰:۳۰' },
+        ];
+
+        function renderMessages() {
+            const el = document.getElementById('messages');
+            el.innerHTML = messages.map(m => `
+                <div class="message ${m.in ? 'out' : ''} message-in">
+                    ${!m.in ? '<img class="message-avatar" src="assets/img/default-avatar.svg">' : ''}
+                    <div class="message-bubble">
+                        <div class="message-content">${m.content}</div>
+                        <div class="message-time">${m.time}</div>
+                    </div>
+                </div>
+            `).join('');
+            el.scrollTop = el.scrollHeight;
+        }
+    </script>
+</body>
+</html>
