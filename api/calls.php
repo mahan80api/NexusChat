@@ -1,121 +1,95 @@
 <?php
-/**
- * NexusChat - Calls API (WebRTC Signaling)
- */
 define('NEXUSCHAT_API', true);
 require_once __DIR__ . '/../config/config.php';
-header('Content-Type: application/json');
+
 header('Access-Control-Allow-Origin: ' . APP_URL);
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Credentials: true');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
 require_auth();
-$action = $_GET['action'] ?? $_POST['action'] ?? 'list';
-$userId = current_user_id();
-$call   = new CallManager();
+$uid = current_user_id();
+$action = $_GET['action'] ?? $_POST['action'] ?? '';
+$db = Database::getInstance();
 
 try {
     switch ($action) {
-        case 'start':
-            $callee = (int)($_POST['callee_id'] ?? 0);
-            $chat   = (int)($_POST['chat_id'] ?? 0);
-            $type   = $_POST['type'] ?? 'voice';
-            $isGroup= !empty($_POST['is_group']);
-            $res = $call->startCall($userId, $callee, $chat, $type, $isGroup);
-            json_response(['success' => true, 'call' => $res, 'participants' => $call->getParticipants($res['call_id'])]);
+        case 'initiate':
+            $to = (int)($_POST['to_user_id'] ?? 0);
+            $type = $_POST['type'] ?? 'voice';
+            $roomId = bin2hex(random_bytes(8));
+            $db->prepare("INSERT INTO call_sessions (room_id, caller_id, callee_id, type, status, created_at) VALUES (?, ?, ?, ?, 'ringing', NOW())")
+                ->execute([$roomId, $uid, $to, $type]);
+            $callId = (int)$db->lastInsertId();
+            pusher_trigger('private-user-' . $to, 'incoming-call', ['call_id' => $callId, 'room_id' => $roomId, 'caller_id' => $uid, 'type' => $type]);
+            json_response(['success' => true, 'call_id' => $callId, 'room_id' => $roomId]);
             break;
 
-        case 'answer':
-            $cid = $_POST['call_id'];
-            $res = $call->answerCall($cid, $userId);
-            json_response(['success' => true, 'call' => $res]);
+        case 'accept':
+            $callId = (int)($_POST['call_id'] ?? 0);
+            $stmt = $db->prepare("SELECT * FROM call_sessions WHERE id = ? AND callee_id = ? AND status = 'ringing'");
+            $stmt->execute([$callId, $uid]);
+            $c = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$c) json_response(['success' => false, 'message' => 'not_found'], 404);
+            $db->prepare("UPDATE call_sessions SET status = 'active', started_at = NOW() WHERE id = ?")->execute([$callId]);
+            pusher_trigger('private-user-' . $c['caller_id'], 'call-accepted', ['call_id' => $callId, 'room_id' => $c['room_id']]);
+            json_response(['success' => true, 'room_id' => $c['room_id']]);
             break;
 
         case 'reject':
-            $cid = $_POST['call_id'];
-            $res = $call->rejectCall($cid, $userId);
-            json_response(['success' => true, 'call' => $res]);
+            $callId = (int)($_POST['call_id'] ?? 0);
+            $stmt = $db->prepare("SELECT * FROM call_sessions WHERE id = ? AND callee_id = ?");
+            $stmt->execute([$callId, $uid]);
+            $c = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$c) json_response(['success' => false, 'message' => 'not_found'], 404);
+            $db->prepare("UPDATE call_sessions SET status = 'rejected', ended_at = NOW() WHERE id = ?")->execute([$callId]);
+            pusher_trigger('private-user-' . $c['caller_id'], 'call-rejected', ['call_id' => $callId]);
+            json_response(['success' => true]);
             break;
 
         case 'end':
-            $cid = $_POST['call_id'];
-            $res = $call->endCall($cid, $userId, 'completed');
-            json_response(['success' => true, 'call' => $res]);
+            $callId = (int)($_POST['call_id'] ?? 0);
+            $stmt = $db->prepare("SELECT * FROM call_sessions WHERE id = ? AND (caller_id = ? OR callee_id = ?)");
+            $stmt->execute([$callId, $uid, $uid]);
+            $c = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$c) json_response(['success' => false, 'message' => 'not_found'], 404);
+            $db->prepare("UPDATE call_sessions SET status = 'ended', ended_at = NOW() WHERE id = ?")->execute([$callId]);
+            $other = $c['caller_id'] == $uid ? $c['callee_id'] : $c['caller_id'];
+            pusher_trigger('private-user-' . $other, 'call-ended', ['call_id' => $callId]);
+            json_response(['success' => true]);
             break;
 
         case 'signal':
-            // Save WebRTC signaling payload (SDP offer/answer or ICE candidate)
-            $cid = $_POST['call_id'];
-            $to  = (int)$_POST['to_user_id'];
-            $type= $_POST['signal_type'];
-            $payload = json_decode($_POST['payload'] ?? '{}', true);
-            $call->saveSignal($cid, $userId, $to, $type, $payload);
+            $callId = (int)($_POST['call_id'] ?? 0);
+            $type = $_POST['signal_type'] ?? '';
+            $data = $_POST['signal_data'] ?? '';
+            $stmt = $db->prepare("SELECT * FROM call_sessions WHERE id = ? AND (caller_id = ? OR callee_id = ?)");
+            $stmt->execute([$callId, $uid, $uid]);
+            $c = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$c) json_response(['success' => false, 'message' => 'not_found'], 404);
+            $other = $c['caller_id'] == $uid ? $c['callee_id'] : $c['caller_id'];
+            pusher_trigger('private-user-' . $other, 'signal', ['call_id' => $callId, 'type' => $type, 'data' => $data, 'from' => $uid]);
             json_response(['success' => true]);
-            break;
-
-        case 'poll':
-            // Long polling endpoint to fetch pending signals
-            $cid = $_POST['call_id'];
-            $last = (int)($_POST['last_id'] ?? 0);
-            $start = microtime(true);
-            $maxWait = 25; // seconds
-            do {
-                $signals = $call->getPendingSignals($cid, $userId, $last);
-                if ($signals) {
-                    json_response(['success' => true, 'signals' => $signals]);
-                    exit;
-                }
-                usleep(500000); // 500ms
-            } while (microtime(true) - $start < $maxWait);
-            json_response(['success' => true, 'signals' => []]);
-            break;
-
-        case 'media_state':
-            $cid = $_POST['call_id'];
-            $audio = isset($_POST['audio']) ? (bool)$_POST['audio'] : null;
-            $video = isset($_POST['video']) ? (bool)$_POST['video'] : null;
-            $screen= isset($_POST['screen']) ? (bool)$_POST['screen'] : null;
-            $call->updateMediaState($cid, $userId, $audio, $video, $screen);
-            json_response(['success' => true]);
-            break;
-
-        case 'info':
-            $cid = $_GET['call_id'];
-            $info = $call->getCall($cid);
-            $info['participants'] = $call->getParticipants($cid);
-            $info['duration'] = $call->getDuration($info);
-            json_response(['success' => true, 'call' => $info]);
             break;
 
         case 'history':
-            $limit = (int)($_GET['limit'] ?? 50);
-            $rows = $call->getCallHistory($userId, $limit);
-            foreach ($rows as &$r) {
-                $participants = $call->getParticipants($r['call_id']);
-                $r['participants'] = $participants;
-            }
-            json_response(['success' => true, 'calls' => $rows]);
+            $stmt = $db->prepare("SELECT c.*, u.display_name as other_name, u.avatar as other_avatar
+                FROM call_sessions c
+                LEFT JOIN users u ON u.id = CASE WHEN c.caller_id = ? THEN c.callee_id ELSE c.caller_id END
+                WHERE c.caller_id = ? OR c.callee_id = ?
+                ORDER BY c.created_at DESC LIMIT 50");
+            $stmt->execute([$uid, $uid, $uid]);
+            json_response(['success' => true, 'calls' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
             break;
 
-        case 'stats':
-            json_response(['success' => true, 'stats' => $call->getStats($userId)]);
-            break;
-
-        case 'ice_servers':
-            // Public STUN + (configurable) TURN
-            $servers = [
-                ['urls' => 'stun:stun.l.google.com:19302'],
-                ['urls' => 'stun:stun1.l.google.com:19302'],
-            ];
-            // TURN server (configure with your own credentials)
-            $turnUrl = getenv('TURN_URL');
-            $turnUser = getenv('TURN_USER');
-            $turnCred = getenv('TURN_CRED');
-            if ($turnUrl && $turnUser && $turnCred) {
-                $servers[] = ['urls' => $turnUrl, 'username' => $turnUser, 'credential' => $turnCred];
-            }
-            json_response(['success' => true, 'iceServers' => $servers]);
+        case 'pending':
+            $stmt = $db->prepare("SELECT c.*, u.display_name as caller_name, u.avatar as caller_avatar
+                FROM call_sessions c
+                LEFT JOIN users u ON u.id = c.caller_id
+                WHERE c.callee_id = ? AND c.status = 'ringing' ORDER BY c.created_at DESC");
+            $stmt->execute([$uid]);
+            json_response(['success' => true, 'calls' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
             break;
 
         default:
