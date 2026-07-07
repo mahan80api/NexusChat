@@ -1,0 +1,15 @@
+# Example environment file — copy to .env and fill in
+APP_URL=https://your-ngrok-subdomain.ngrok-free.app
+APP_ENV=production
+APP_DEBUG=false
+APP_SECRET=replace-with-32-char-random-string
+
+DB_HOST=localhost
+DB_NAME=nexuschat
+DB_USER=root
+DB_PASS=
+
+PUSHER_KEY=
+PUSHER_SECRET=
+PUSHER_APP_ID=
+PUSHER_CLUSTER=mt1
