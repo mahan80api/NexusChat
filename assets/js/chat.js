@@ -266,6 +266,7 @@ const ChatUI = {
         <button class="icon-btn" id="attachBtn" title="فایل">📎</button>
         <input type="file" id="fileInput" hidden>
         <button class="voice-btn" id="voiceBtn" title="ضبط صدا">🎤</button>
+        <button class="icon-btn" id="stickerBtn" title="استیکر">😀</button>
         <textarea class="message-input" id="messageInput" placeholder="پیام خود را بنویسید..." rows="1"></textarea>
         <button class="icon-btn" id="emojiBtn">😊</button>
         <button class="send-btn" id="sendBtn">➤</button>
@@ -281,6 +282,7 @@ const ChatUI = {
       if (e.target.files[0]) this.handleFileUpload(e.target.files[0]);
     });
     document.getElementById('emojiBtn').addEventListener('click', () => this.toggleEmojiPicker());
+    document.getElementById('stickerBtn').addEventListener('click', () => StickerUI.open(chat.id));
     document.getElementById('chatInfoBtn').addEventListener('click', () => DNDManager.showChatInfoWithMute(chat));
     document.getElementById('callVoiceBtn').addEventListener('click', () => App.toast('🚧 تماس صوتی - به زودی'));
     document.getElementById('callVideoBtn').addEventListener('click', () => App.toast('🚧 تماس تصویری - به زودی'));
@@ -351,6 +353,8 @@ const ChatUI = {
       media = `<video class="message-image" src="assets/uploads/${m.file_path}" controls></video>`;
     } else if (m.type === 'voice' && m.file_path) {
       media = VoicePlayer.render(m);
+    } else if (m.type === 'sticker' && m.file_path) {
+      media = `<div class="message-sticker"><img src="assets/uploads/stickers/${m.file_path}" alt="sticker"></div>`;
     } else if (m.type === 'file' && m.file_path) {
       media = `<a class="message-file" href="assets/uploads/${m.file_path}" download>
                 <span>📄</span>
@@ -439,7 +443,6 @@ const ChatUI = {
     area.scrollTop = area.scrollHeight;
     VoicePlayer.bind();
 
-    // Link preview for new message
     if (window.LinkPreviewUI && m.content) {
       const lastMsg = area.querySelector(`.message[data-message-id="${m.id}"]`);
       if (lastMsg) {
