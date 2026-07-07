@@ -71,7 +71,6 @@ const ChatUI = {
       searchTimeout = setTimeout(() => this.searchUsers(q), 300);
     });
 
-    // Update theme button icon to current theme
     const updateThemeIcon = () => {
       const btn = document.getElementById('themeBtn');
       if (btn && window.ThemeManager) {
@@ -83,7 +82,6 @@ const ChatUI = {
     updateThemeIcon();
     setInterval(updateThemeIcon, 1000);
 
-    // Update DND icon
     const updateDndIcon = () => {
       const btn = document.getElementById('dndBtn');
       if (btn && window.DNDManager) {
@@ -283,7 +281,7 @@ const ChatUI = {
       if (e.target.files[0]) this.handleFileUpload(e.target.files[0]);
     });
     document.getElementById('emojiBtn').addEventListener('click', () => this.toggleEmojiPicker());
-    document.getElementById('chatInfoBtn').addEventListener('click', () => this.showChatInfo(chat));
+    document.getElementById('chatInfoBtn').addEventListener('click', () => DNDManager.showChatInfoWithMute(chat));
     document.getElementById('callVoiceBtn').addEventListener('click', () => App.toast('🚧 تماس صوتی - به زودی'));
     document.getElementById('callVideoBtn').addEventListener('click', () => App.toast('🚧 تماس تصویری - به زودی'));
     document.getElementById('searchInChatBtn').addEventListener('click', () => {
@@ -332,6 +330,14 @@ const ChatUI = {
         this.reactToMessage(parseInt(el.dataset.messageId), '❤️');
       });
     });
+
+    // Render link previews
+    if (window.LinkPreviewUI) {
+      area.querySelectorAll('.message').forEach(msgEl => {
+        const contentEl = msgEl.querySelector('.message-content');
+        if (contentEl) LinkPreviewUI.render(contentEl.textContent, msgEl);
+      });
+    }
   },
 
   renderMessage(m) {
@@ -432,6 +438,15 @@ const ChatUI = {
     area.insertAdjacentHTML('beforeend', this.renderMessage(m));
     area.scrollTop = area.scrollHeight;
     VoicePlayer.bind();
+
+    // Link preview for new message
+    if (window.LinkPreviewUI && m.content) {
+      const lastMsg = area.querySelector(`.message[data-message-id="${m.id}"]`);
+      if (lastMsg) {
+        const contentEl = lastMsg.querySelector('.message-content');
+        if (contentEl) LinkPreviewUI.render(contentEl.textContent, lastMsg);
+      }
+    }
   },
 
   async handleFileUpload(file) {
@@ -769,7 +784,7 @@ const ChatUI = {
   },
 
   showChatInfo(chat) {
-    App.toast('ℹ ' + (chat.name || 'گفتگو') + ' · ' + (chat.other_user ? chat.other_user.display_name : ''), 'info');
+    DNDManager.showChatInfoWithMute(chat);
   },
 
   async searchUsers(q) {
