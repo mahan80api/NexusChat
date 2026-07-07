@@ -4,16 +4,19 @@
  */
 define('NEXUSCHAT_API', true);
 require_once __DIR__ . '/../config/config.php';
-header('Content-Type: application/json');
+
 header('Access-Control-Allow-Origin: ' . APP_URL);
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Credentials: true');
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
 require_auth();
 $action = $_GET['action'] ?? $_POST['action'] ?? 'wallets';
 $userId = current_user_id();
 $wm = new WalletManager();
+$db = Database::getInstance();
 
 try {
     switch ($action) {
@@ -30,8 +33,7 @@ try {
 
         case 'balance':
             $currency = $_GET['currency'] ?? 'IRR';
-            $balance = $wm->getBalance($userId, $currency);
-            json_response(['success' => true, 'currency' => $currency, 'balance' => $balance]);
+            json_response(['success' => true, 'currency' => $currency, 'balance' => $wm->getBalance($userId, $currency)]);
             break;
 
         case 'deposit':
@@ -65,8 +67,8 @@ try {
             break;
 
         case 'transfer_by_username':
-            $username = $_POST['username'] ?? '';
-            $stmt = $GLOBALS['db']->prepare("SELECT id FROM users WHERE username = ?");
+            $username = sanitize($_POST['username'] ?? '');
+            $stmt = $db->prepare("SELECT id FROM users WHERE username = ?");
             $stmt->execute([$username]);
             $target = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$target) throw new Exception('user_not_found');
@@ -114,7 +116,6 @@ try {
             json_response(['success' => true, 'requests' => $list]);
             break;
 
-        // ====== Escrow ======
         case 'escrow_create':
             $to = (int)($_POST['to_user_id'] ?? 0);
             $currency = $_POST['currency'] ?? 'IRR';
@@ -140,16 +141,15 @@ try {
             json_response(['success' => true, 'list' => $wm->getEscrowTransactions($userId)]);
             break;
 
-        // ====== Cards ======
         case 'cards':
             json_response(['success' => true, 'cards' => $wm->getCards($userId)]);
             break;
 
         case 'add_card':
             $cn = preg_replace('/\s+/', '', $_POST['card_number'] ?? '');
-            $holder = $_POST['card_holder'] ?? '';
-            $expiry = $_POST['expiry'] ?? '';
-            $nick = $_POST['nickname'] ?? '';
+            $holder = sanitize($_POST['card_holder'] ?? '');
+            $expiry = sanitize($_POST['expiry'] ?? '');
+            $nick = sanitize($_POST['nickname'] ?? '');
             if (strlen($cn) < 13) throw new Exception('invalid_card_number');
             $id = $wm->addCard($userId, $cn, $holder, $expiry, $nick);
             json_response(['success' => true, 'card_id' => $id]);
@@ -167,7 +167,6 @@ try {
             json_response(['success' => true]);
             break;
 
-        // ====== Crypto ======
         case 'generate_address':
             $currency = $_POST['currency'] ?? 'BTC';
             $addr = $wm->generateCryptoAddress($userId, $currency);
@@ -198,7 +197,6 @@ try {
             json_response(['success' => true, 'converted' => $r]);
             break;
 
-        // ====== PIN ======
         case 'set_pin':
             $pin = $_POST['pin'] ?? '';
             if (strlen($pin) < 4) throw new Exception('pin_too_short');
@@ -206,9 +204,13 @@ try {
             json_response(['success' => true]);
             break;
 
-        // ====== Transactions ======
+        case 'verify_pin':
+            $pin = $_POST['pin'] ?? '';
+            json_response(['success' => $wm->verifyPin($userId, $pin)]);
+            break;
+
         case 'transactions':
-            $limit = (int)($_GET['limit'] ?? 50);
+            $limit = min(100, max(1, (int)($_GET['limit'] ?? 50)));
             $type = $_GET['type'] ?? null;
             $currency = $_GET['currency'] ?? null;
             $list = $wm->getTransactions($userId, $limit, $type, $currency);
