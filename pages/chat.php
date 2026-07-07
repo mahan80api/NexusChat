@@ -38,6 +38,7 @@ $currentUser = (new User())->findById($_SESSION['user_id']);
     </script>
     <script src="assets/js/galaxy.js"></script>
     <script src="assets/js/voice.js"></script>
+    <script src="assets/js/search.js"></script>
     <script src="assets/js/chat.js"></script>
     <script>
     App.currentUser = window.currentUser;
@@ -47,6 +48,14 @@ $currentUser = (new User())->findById($_SESSION['user_id']);
             if (l) l.remove();
             ChatUI.start();
         }, 300);
+
+        // Ctrl+K opens search
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                if (typeof SearchUI !== 'undefined') SearchUI.open();
+            }
+        });
     });
     </script>
 </body>
