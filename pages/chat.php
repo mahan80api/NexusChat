@@ -19,12 +19,14 @@ $userTheme = $currentUser['theme'] ?? 'galaxy';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🌌 NexusChat - گفتگو</title>
+    <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="assets/css/galaxy.css">
     <link rel="stylesheet" href="assets/css/themes.css">
     <link rel="stylesheet" href="assets/css/dnd.css">
     <link rel="stylesheet" href="assets/css/link_preview.css">
     <link rel="stylesheet" href="assets/css/stickers.css">
     <link rel="stylesheet" href="assets/css/polls.css">
+    <link rel="stylesheet" href="assets/css/push.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>">
     <meta name="user-id" content="<?= $currentUser['id'] ?>">
     <meta name="user-theme" content="<?= htmlspecialchars($userTheme) ?>">
@@ -52,6 +54,7 @@ $userTheme = $currentUser['theme'] ?? 'galaxy';
     <script src="assets/js/link_preview.js"></script>
     <script src="assets/js/stickers.js"></script>
     <script src="assets/js/polls.js"></script>
+    <script src="assets/js/push.js"></script>
     <script src="assets/js/chat.js"></script>
     <script>
     App.currentUser = window.currentUser;
@@ -72,6 +75,15 @@ $userTheme = $currentUser['theme'] ?? 'galaxy';
         if (window.DNDManager)     DNDManager.init();
         if (window.StickerUI)      StickerUI.init();
         if (window.PollUI)         PollUI.startTimerUpdater();
+        if (window.PushUI)         PushUI.init();
+
+        // Listen for service worker messages
+        navigator.serviceWorker?.addEventListener('message', (e) => {
+          if (e.data?.type === 'navigate' && e.data.url) {
+            const chatId = e.data.data?.chat_id;
+            if (chatId) ChatUI.openChat(chatId);
+          }
+        });
 
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
