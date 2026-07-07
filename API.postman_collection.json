@@ -1,0 +1,143 @@
+{
+  "info": {
+    "name": "NexusChat API",
+    "description": "مجموعه کامل endpoint‌های NexusChat",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000/api" },
+    { "key": "username", "value": "mahan" },
+    { "key": "password", "value": "password" }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth.php?action=login", "host": ["{{baseUrl}}"], "path": ["auth.php"], "query": [{ "key": "action", "value": "login" }] },
+            "body": { "mode": "urlencoded", "urlencoded": [{ "key": "username", "value": "{{username}}" }, { "key": "password", "value": "{{password}}" }] }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth.php?action=register" },
+            "body": { "mode": "urlencoded", "urlencoded": [{ "key": "username", "value": "newuser" }, { "key": "display_name", "value": "New User" }, { "key": "password", "value": "password123" }] }
+          }
+        },
+        { "name": "Me", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/auth.php?action=me" } } },
+        { "name": "Logout", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/auth.php?action=logout" } } }
+      ]
+    },
+    {
+      "name": "💬 Chats",
+      "item": [
+        { "name": "List", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/chats.php?action=list" } } },
+        { "name": "Messages", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/chats.php?action=messages&chat_id=1&limit=50" } } },
+        { "name": "Send", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/chats.php?action=send&chat_id=1" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "content", "value": "Hello!" }, { "key": "type", "value": "text" }] } } },
+        { "name": "React", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/chats.php?action=react" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "message_id", "value": "1" }, { "key": "emoji", "value": "❤️" }] } } },
+        { "name": "Delete", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/chats.php?action=delete" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "message_id", "value": "1" }] } } }
+      ]
+    },
+    {
+      "name": "💰 Wallet",
+      "item": [
+        { "name": "List Wallets", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/wallet.php?action=list" } } },
+        { "name": "Balance", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/wallet.php?action=balance&wallet_id=1" } } },
+        { "name": "Topup", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/wallet.php?action=topup" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "wallet_id", "value": "1" }, { "key": "amount", "value": "100000" }] } } },
+        { "name": "Transfer", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/wallet.php?action=transfer" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "currency", "value": "IRR" }, { "key": "to", "value": "sara" }, { "key": "amount", "value": "50000" }, { "key": "note", "value": "test" }] } } },
+        { "name": "Rate", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/wallet.php?action=rate&from=USD&to=IRR&amount=1" } } },
+        { "name": "Exchange", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/wallet.php?action=exchange" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "from", "value": "USD" }, { "key": "to", "value": "IRR" }, { "key": "amount", "value": "10" }] } } },
+        { "name": "Cards", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/wallet.php?action=cards" } } },
+        { "name": "Add Card", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/wallet.php?action=add_card" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "card_number", "value": "6037991234567890" }, { "key": "card_holder", "value": "MAHAN" }, { "key": "bank_name", "value": "Melli" }, { "key": "expiry", "value": "12/28" }] } } },
+        { "name": "Crypto Send", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/wallet.php?action=crypto_send" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "currency", "value": "BTC" }, { "key": "to_address", "value": "bc1q..." }, { "key": "amount", "value": "0.01" }] } } },
+        { "name": "Escrow Create", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/wallet.php?action=escrow_create" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "to_user", "value": "ali" }, { "key": "amount", "value": "5000000" }, { "key": "description", "value": "laptop" }] } } },
+        { "name": "History", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/wallet.php?action=history&wallet_id=1" } } }
+      ]
+    },
+    {
+      "name": "👥 Users",
+      "item": [
+        { "name": "Search", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/users.php?action=search&q=mah" } } },
+        { "name": "Contacts", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/users.php?action=contacts" } } },
+        { "name": "Profile", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/users.php?action=profile&user_id=2" } } },
+        { "name": "Update", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/users.php?action=update" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "display_name", "value": "My Name" }, { "key": "bio", "value": "Hello!" }] } } },
+        { "name": "Set DND", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/users.php?action=set_dnd&minutes=60" } } },
+        { "name": "Set Theme", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/users.php?action=set_theme&theme=ocean" } } }
+      ]
+    },
+    {
+      "name": "📢 Channels",
+      "item": [
+        { "name": "List", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/channels.php?action=list" } } },
+        { "name": "Create", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/channels.php?action=create" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "username", "value": "my_channel" }, { "key": "name", "value": "My Channel" }, { "key": "description", "value": "Test" }] } } },
+        { "name": "Subscribe", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/channels.php?action=subscribe&channel_id=1" } } },
+        { "name": "Posts", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/channels.php?action=posts&channel_id=1" } } }
+      ]
+    },
+    {
+      "name": "🤖 Bots",
+      "item": [
+        { "name": "List", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/bots.php?action=list" } } },
+        { "name": "Create", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/bots.php?action=create" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "username", "value": "my_bot" }, { "key": "display_name", "value": "My Bot" }, { "key": "description", "value": "Test bot" }] } } },
+        { "name": "Command", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/bots.php?action=command" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "bot_id", "value": "1" }, { "key": "command", "value": "/start" }] } } }
+      ]
+    },
+    {
+      "name": "📞 Calls",
+      "item": [
+        { "name": "Start", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/calls.php?action=start&chat_id=1&type=video" } } },
+        { "name": "Accept", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/calls.php?action=accept&call_id=1" } } },
+        { "name": "Reject", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/calls.php?action=reject&call_id=1" } } },
+        { "name": "End", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/calls.php?action=end&call_id=1" } } },
+        { "name": "History", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/calls.php?action=history" } } }
+      ]
+    },
+    {
+      "name": "😀 Stickers",
+      "item": [
+        { "name": "Packs", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/stickers.php?action=packs" } } },
+        { "name": "List in Pack", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/stickers.php?action=list&pack_id=1" } } }
+      ]
+    },
+    {
+      "name": "📊 Polls",
+      "item": [
+        { "name": "Create", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/polls.php?action=create&chat_id=1" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "question", "value": "Q?" }, { "key": "options[]", "value": "A" }, { "key": "options[]", "value": "B" }] } } },
+        { "name": "Vote", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/polls.php?action=vote" }, "body": { "mode": "urlencoded", "urlencoded": [{ "key": "poll_id", "value": "1" }, { "key": "option_id", "value": "1" }] } } },
+        { "name": "Results", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/polls.php?action=results&poll_id=1" } } }
+      ]
+    },
+    {
+      "name": "🔍 Search",
+      "item": [
+        { "name": "Messages", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/search.php?action=messages&q=سلام" } } },
+        { "name": "Saved", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/search.php?action=saved" } } },
+        { "name": "Global", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/search.php?action=global&q=test" } } }
+      ]
+    },
+    {
+      "name": "🔗 Preview",
+      "item": [
+        { "name": "Link Preview", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/preview.php?action=preview&url=https://github.com" } } }
+      ]
+    },
+    {
+      "name": "🔔 Push",
+      "item": [
+        { "name": "Subscribe", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/push.php?action=subscribe" }, "body": { "mode": "raw", "raw": "{\"endpoint\":\"https://...\",\"keys\":{\"p256dh\":\"...\",\"auth\":\"...\"}}" } } },
+        { "name": "VAPID Key", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/push.php?action=vapid_key" } } }
+      ]
+    },
+    {
+      "name": "📤 Upload",
+      "item": [
+        { "name": "Upload File", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/upload.php" }, "body": { "mode": "formdata", "formdata": [{ "key": "file", "type": "file", "src": "/path/to/file.jpg" }] } } }
+      ]
+    }
+  ]
+}
