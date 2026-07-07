@@ -221,8 +221,9 @@ const ChatUI = {
       </header>
       <div class="messages-area" id="messagesArea"></div>
       <div class="chat-input-bar">
-        <button class="icon-btn" id="attachBtn">📎</button>
+        <button class="icon-btn" id="attachBtn" title="فایل">📎</button>
         <input type="file" id="fileInput" hidden>
+        <button class="voice-btn" id="voiceBtn" title="ضبط صدا">🎤</button>
         <textarea class="message-input" id="messageInput" placeholder="پیام خود را بنویسید..." rows="1"></textarea>
         <button class="icon-btn" id="emojiBtn">😊</button>
         <button class="send-btn" id="sendBtn">➤</button>
@@ -241,6 +242,12 @@ const ChatUI = {
     document.getElementById('chatInfoBtn').addEventListener('click', () => this.showChatInfo(chat));
     document.getElementById('callVoiceBtn').addEventListener('click', () => App.toast('🚧 تماس صوتی - به زودی'));
     document.getElementById('callVideoBtn').addEventListener('click', () => App.toast('🚧 تماس تصویری - به زودی'));
+
+    // Voice button
+    document.getElementById('voiceBtn').addEventListener('click', () => {
+      if (VoiceRecorder.isRecording) VoiceRecorder.stop();
+      else VoiceRecorder.start();
+    });
   },
 
   // ============ Messages ============
@@ -248,6 +255,7 @@ const ChatUI = {
     const res = await App.api('messages', 'list&chat_id=' + chatId);
     if (res.success) {
       this.renderMessages(res.messages);
+      VoicePlayer.bind();
       App.api('chats', 'read', this.toFormData({ chat_id: chatId, last_message_id: res.messages.length ? res.messages[res.messages.length-1].id : 0 }));
     }
   },
@@ -279,23 +287,26 @@ const ChatUI = {
     const isOut = m.sender_id == App.currentUser.id;
     const cls = isOut ? 'message-out' : 'message-in';
     let media = '';
+
     if (m.type === 'image' && m.file_path) {
       media = `<img class="message-image" src="assets/uploads/${m.file_path}" onclick="window.open(this.src)">`;
     } else if (m.type === 'video' && m.file_path) {
       media = `<video class="message-image" src="assets/uploads/${m.file_path}" controls></video>`;
-    } else if ((m.type === 'file' || m.type === 'voice') && m.file_path) {
+    } else if (m.type === 'voice' && m.file_path) {
+      media = VoicePlayer.render(m);
+    } else if (m.type === 'file' && m.file_path) {
       media = `<a class="message-file" href="assets/uploads/${m.file_path}" download>
                 <span>📄</span>
                 <div><div>${m.file_path.split('/').pop()}</div>
                 <div style="font-size:11px;opacity:0.7">${App.formatSize(m.file_size)}</div></div>
               </a>`;
     }
+
     const reply = m.reply_to ? `
       <div class="reply-preview">
         <strong>${App.escapeHTML(m.reply_to.sender_name || '')}</strong>: ${App.escapeHTML((m.reply_to.content || '').slice(0, 60))}
       </div>` : '';
 
-    // Forwarded header
     const fwd = m.forward_info ? `
       <div class="forwarded-header">
         <span class="fwd-icon">↪</span>
@@ -336,21 +347,28 @@ const ChatUI = {
       const ext = App.pendingFile.name.split('.').pop().toLowerCase();
       const imageExts = ['jpg','jpeg','png','gif','webp','svg'];
       const videoExts = ['mp4','webm','mov','avi'];
-      const audioExts = ['mp3','wav','ogg','m4a'];
+      const audioExts = ['mp3','wav','ogg','m4a','opus','webm','aac'];
       let type = 'file';
       if (imageExts.includes(ext)) type = 'image';
       else if (videoExts.includes(ext)) type = 'video';
       else if (audioExts.includes(ext)) type = 'voice';
       fd.append('type', type);
+      if (type === 'voice' && App.pendingVoiceDuration) {
+        fd.append('duration', App.pendingVoiceDuration);
+      }
     }
 
     input.value = '';
     App.replyTo = null;
     App.pendingFile = null;
+    App.pendingVoiceDuration = null;
+    const preview = document.getElementById('voicePreview');
+    if (preview) preview.remove();
 
     const res = await App.api('messages', 'send', fd);
     if (res.success) {
       this.appendMessage(res.message);
+      VoicePlayer.bind();
       this.loadChats();
     } else {
       App.toast(res.message || 'خطا در ارسال', 'error');
@@ -362,6 +380,7 @@ const ChatUI = {
     if (!area) return;
     area.insertAdjacentHTML('beforeend', this.renderMessage(m));
     area.scrollTop = area.scrollHeight;
+    VoicePlayer.bind();
   },
 
   async handleFileUpload(file) {
@@ -434,7 +453,6 @@ const ChatUI = {
     });
   },
 
-  // ============ Forward modal ============
   async showForwardModal(messageId) {
     if (!App.chats.length) { App.toast('چتی برای فوروارد وجود ندارد', 'error'); return; }
     let selected = new Set();
@@ -512,7 +530,6 @@ const ChatUI = {
     });
   },
 
-  // ============ Emoji picker ============
   toggleEmojiPicker() {
     const existing = document.querySelector('.emoji-picker');
     if (existing) { existing.remove(); return; }
@@ -530,7 +547,6 @@ const ChatUI = {
     });
   },
 
-  // ============ New chat modal ============
   showNewChatModal() {
     const html = `
       <h3 class="modal-title">✨ گفتگوی جدید</h3>
