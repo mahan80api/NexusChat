@@ -1,6 +1,6 @@
 <?php
 /**
- * NexusChat - Users API
+ * NexusChat - User API
  */
 define('NEXUSCHAT_API', true);
 require_once __DIR__ . '/../config/config.php';
@@ -20,68 +20,76 @@ $notif  = new Notification();
 
 try {
     switch ($action) {
-
-        case 'search':
-            $query = sanitize($_GET['q'] ?? '');
-            if (mb_strlen($query) < 2) {
-                json_response(['success' => true, 'users' => []]);
-            }
-            $results = $user->search($query, $userId);
-            json_response(['success' => true, 'users' => $results]);
+        case 'me':
+            $u = $user->findById($userId);
+            json_response(['success' => true, 'user' => $u]);
             break;
 
         case 'profile':
-            $targetId = (int)($_GET['user_id'] ?? $_GET['id'] ?? 0);
-            $profile = $user->getPublicProfile($targetId);
-            if (!$profile) throw new Exception('کاربر یافت نشد');
-            $profile['is_blocked'] = $user->isBlocked($userId, $targetId);
-            json_response(['success' => true, 'user' => $profile]);
+            $id  = (int)($_GET['id'] ?? 0);
+            $u   = $user->getPublicProfile($id);
+            json_response(['success' => true, 'user' => $u]);
             break;
 
         case 'update':
+            $allowed = ['display_name', 'bio', 'status_text', 'theme', 'language', 'avatar'];
             $data = [];
-            if (!empty($_POST['display_name'])) $data['display_name'] = sanitize($_POST['display_name']);
-            if (isset($_POST['bio'])) $data['bio'] = sanitize($_POST['bio']);
-            if (isset($_POST['status_text'])) $data['status_text'] = sanitize($_POST['status_text']);
-            if (!empty($_POST['theme'])) $data['theme'] = sanitize($_POST['theme']);
-            if (!empty($_POST['language'])) $data['language'] = sanitize($_POST['language']);
-
-            if (!empty($data)) {
-                $user->updateProfile($userId, $data);
+            foreach ($allowed as $f) {
+                if (isset($_POST[$f])) $data[$f] = $_POST[$f];
             }
-            json_response(['success' => true, 'message' => 'پروفایل به‌روز شد']);
-            break;
-
-        case 'block':
-            $targetId = (int)($_POST['user_id'] ?? 0);
-            $user->block($userId, $targetId);
+            if (!empty($_FILES['avatar'])) {
+                $url = handle_upload('avatar', ALLOWED_IMAGE_EXTS, 2 * 1024 * 1024);
+                if ($url) $data['avatar'] = $url;
+            }
+            $user->update($userId, $data);
             json_response(['success' => true]);
             break;
 
-        case 'unblock':
-            $targetId = (int)($_POST['user_id'] ?? 0);
-            $user->unblock($userId, $targetId);
+        case 'update_theme':
+            $theme = $_POST['theme'] ?? 'galaxy';
+            $allowed_themes = ['galaxy', 'light', 'dark', 'purple', 'ocean', 'custom'];
+            if (!in_array($theme, $allowed_themes, true)) $theme = 'galaxy';
+            $user->update($userId, ['theme' => $theme]);
+            json_response(['success' => true, 'theme' => $theme]);
+            break;
+
+        case 'search':
+            $q = trim($_GET['q'] ?? '');
+            $users = $user->search($q, 20);
+            json_response(['success' => true, 'users' => $users]);
+            break;
+
+        case 'contacts':
+            $q = trim($_GET['q'] ?? '');
+            $contacts = $user->searchContacts($userId, $q);
+            json_response(['success' => true, 'contacts' => $contacts]);
+            break;
+
+        case 'set_status':
+            $status = $_POST['status_text'] ?? '';
+            $user->update($userId, ['status_text' => $status]);
             json_response(['success' => true]);
             break;
 
-        case 'notifications':
-            $items = $notif->getForUser($userId);
-            $unread = $notif->unreadCount($userId);
-            json_response(['success' => true, 'notifications' => $items, 'unread_count' => $unread]);
-            break;
-
-        case 'notifications_read':
-            $notif->markAllRead($userId);
+        case 'change_password':
+            $old = $_POST['old_password'] ?? '';
+            $new = $_POST['new_password'] ?? '';
+            if (strlen($new) < 6) throw new Exception('رمز جدید باید حداقل ۶ کاراکتر باشد');
+            if (!$user->verifyPassword($userId, $old)) throw new Exception('رمز فعلی اشتباه');
+            $stmt = Database::getInstance()->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
+            $stmt->execute([password_hash($new, PASSWORD_BCRYPT), $userId]);
             json_response(['success' => true]);
             break;
 
-        case 'heartbeat':
-            $user->setOnline($userId);
-            json_response(['success' => true, 'time' => time()]);
-            break;
-
-        case 'logout_all':
-            $user->setOffline($userId);
+        case 'delete_account':
+            if (($_POST['confirm'] ?? '') !== 'DELETE') throw new Exception('تأیید نشد');
+            $db = Database::getInstance();
+            $db->beginTransaction();
+            $db->prepare("DELETE FROM messages WHERE sender_id = ?")->execute([$userId]);
+            $db->prepare("DELETE FROM chat_members WHERE user_id = ?")->execute([$userId]);
+            $db->prepare("DELETE FROM sessions WHERE user_id = ?")->execute([$userId]);
+            $db->prepare("DELETE FROM users WHERE id = ?")->execute([$userId]);
+            $db->commit();
             session_destroy();
             json_response(['success' => true]);
             break;
