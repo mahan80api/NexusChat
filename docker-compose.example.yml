@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: nexuschat
+      MYSQL_USER: nexus
+      MYSQL_PASSWORD: nexuspwd
+    volumes:
+      - nexuschat_db:/var/lib/mysql
+      - ./db/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_NAME: nexuschat
+      DB_USER: root
+      DB_PASS: rootpass
+      APP_URL: http://localhost:8000
+      APP_ENV: development
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "8000:80"
+
+volumes:
+  nexuschat_db:
