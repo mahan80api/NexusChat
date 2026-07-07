@@ -1,0 +1,48 @@
+/* NexusChat - Chat styles */
+.message-image img, .message-video video { max-width: 300px; max-height: 300px; border-radius: 12px; cursor: pointer; display: block; }
+.message-file { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg-glass); border-radius: 8px; }
+.message-sticker img { width: 150px; height: 150px; }
+.message-reactions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.reaction { background: var(--bg-glass); padding: 2px 8px; border-radius: 12px; font-size: 12px; cursor: pointer; }
+.reaction.mine { background: var(--accent); color: white; }
+.message.out .message-bubble { border-bottom-right-radius: 4px; }
+.message:not(.out) .message-bubble { border-bottom-left-radius: 4px; }
+
+.message-link-preview { margin-top: 8px; padding: 10px; background: var(--bg-glass); border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer; text-decoration: none; color: var(--text); display: block; }
+.message-link-preview img { max-width: 100%; max-height: 150px; border-radius: 6px; margin-bottom: 6px; }
+.message-link-title { font-weight: 600; font-size: 14px; }
+.message-link-desc { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+.voice-player { display: flex; align-items: center; gap: 8px; padding: 6px 10px; }
+.voice-play-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); border: none; color: white; cursor: pointer; }
+.voice-wave { flex: 1; height: 24px; background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%); border-radius: 12px; position: relative; }
+.voice-duration { font-size: 12px; color: var(--text-muted); }
+
+.location-card { padding: 8px; }
+.location-card a { color: var(--accent); text-decoration: none; }
+
+.rec-panel { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--bg-elevated); padding: 12px 16px; border-radius: 20px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-deep); z-index: 1000; animation: slideUp 0.3s; }
+.rec-dot { width: 12px; height: 12px; background: var(--danger); border-radius: 50%; animation: pulse 1s infinite; }
+
+/* Poll */
+.poll-card { background: var(--bg-glass); padding: 12px; border-radius: 12px; }
+.poll-question { font-weight: 600; margin-bottom: 10px; }
+.poll-options { display: flex; flex-direction: column; gap: 6px; }
+.poll-option { padding: 8px 12px; background: var(--bg-elevated); border-radius: 8px; cursor: pointer; transition: var(--transition); position: relative; overflow: hidden; }
+.poll-option:hover { background: var(--accent); }
+.poll-option.voted { background: var(--accent); color: white; }
+.poll-option-bar { position: absolute; top: 0; left: 0; bottom: 0; background: rgba(255,255,255,0.2); transition: width 0.5s; }
+.poll-option-text { position: relative; z-index: 1; }
+
+/* Forwarded badge */
+.forwarded-from { font-size: 11px; color: var(--text-muted); font-style: italic; margin-bottom: 4px; }
+
+/* Sticker picker */
+.sticker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto; }
+.sticker-item { width: 100%; aspect-ratio: 1; object-fit: contain; cursor: pointer; border-radius: 8px; transition: var(--transition); }
+.sticker-item:hover { transform: scale(1.1); background: var(--bg-glass); }
+
+/* Context menu */
+.message-context-menu { position: fixed; background: var(--bg-elevated); border: 1px solid var(--glass-border); border-radius: 8px; padding: 4px; z-index: 1000; box-shadow: var(--shadow-deep); }
+.context-item { padding: 8px 16px; cursor: pointer; border-radius: 4px; font-size: 13px; }
+.context-item:hover { background: var(--accent); }
