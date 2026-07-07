@@ -1,7 +1,6 @@
 <?php
 /**
  * NexusChat - Messages API
- * Endpoints: send, list, edit, delete, react, pin, forward, search
  */
 define('NEXUSCHAT_API', true);
 require_once __DIR__ . '/../config/config.php';
@@ -33,6 +32,7 @@ try {
             $mime     = $_POST['mime_type'] ?? null;
             $isEncrypted = !empty($_POST['is_encrypted']) ? 1 : 0;
             $encryptedContent = $_POST['encrypted_content'] ?? null;
+            $duration = !empty($_POST['duration']) ? (int)$_POST['duration'] : null;
 
             if (!$chatId || !$chat->isMember($chatId, $userId)) {
                 throw new Exception('دسترسی غیرمجاز');
@@ -49,6 +49,7 @@ try {
                 'mime_type'         => $mime,
                 'is_encrypted'      => $isEncrypted,
                 'encrypted_content' => $encryptedContent,
+                'duration'          => $duration,
             ]);
 
             // Notify other members
@@ -61,7 +62,7 @@ try {
                         $m['id'],
                         'message',
                         $sender['display_name'],
-                        mb_substr($content ?: '[فایل]', 0, 100),
+                        mb_substr($content ?: ($type === 'voice' ? '🎤 پیام صوتی' : '[فایل]'), 0, 100),
                         $chatId
                     );
                 }
@@ -80,7 +81,6 @@ try {
             }
             $messages = $msg->getMessages($chatId, $limit, $before);
 
-            // Attach reply + reactions
             foreach ($messages as &$m) {
                 if ($m['reply_to_id']) {
                     $reply = $msg->findById($m['reply_to_id']);
@@ -142,7 +142,6 @@ try {
             if (!$messageId || !$fromChatId || empty($toChatIds)) {
                 throw new Exception('پارامترهای ناقص');
             }
-            // user must be member of source chat
             if (!$chat->isMember($fromChatId, $userId)) {
                 throw new Exception('دسترسی غیرمجاز به چت مبدا');
             }
@@ -154,8 +153,6 @@ try {
                 try {
                     $forwarded = $msg->forward($messageId, $fromChatId, $toChatId, $userId);
                     $results[] = ['chat_id' => $toChatId, 'message' => $forwarded, 'ok' => true];
-
-                    // Notify members of destination chat
                     $members = $chat->getMembers($toChatId);
                     $sender = $user->getPublicProfile($userId);
                     $notif = new Notification();
