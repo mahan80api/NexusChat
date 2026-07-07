@@ -1,40 +1,6 @@
-# NexusChat — Apache config
+# NexusChat - Apache configuration
 Options -Indexes
 ServerSignature Off
-
-# UTF-8
-AddDefaultCharset UTF-8
-
-# Routing: /api/X.php?action=Y
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/([a-z0-9_]+)$ api/$1.php [L,QSA]
-
-# Block access to sensitive files
-<FilesMatch "\.(env|sql|log|md|json|lock|gitignore|gitattributes)$">
-    Require all denied
-</FilesMatch>
-
-<FilesMatch "^(composer|package|README|\.htaccess|\.htpasswd)">
-    Require all denied
-</FilesMatch>
-
-# No directory listing
-Options -Indexes
-
-# Cache static assets
-<IfModule mod_expires.c>
-    ExpiresActive On
-    ExpiresByType image/jpeg "access plus 1 month"
-    ExpiresByType image/png "access plus 1 month"
-    ExpiresByType image/gif "access plus 1 month"
-    ExpiresByType image/webp "access plus 1 month"
-    ExpiresByType image/svg+xml "access plus 1 month"
-    ExpiresByType text/css "access plus 1 week"
-    ExpiresByType application/javascript "access plus 1 week"
-    ExpiresByType font/woff2 "access plus 1 year"
-</IfModule>
 
 # Security headers
 <IfModule mod_headers.c>
@@ -42,25 +8,57 @@ Options -Indexes
     Header set X-Frame-Options "SAMEORIGIN"
     Header set X-XSS-Protection "1; mode=block"
     Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "geolocation=(self), microphone=(self), camera=(self)"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
 </IfModule>
 
-# Gzip
+# Force HTTPS
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Block sensitive files
+<FilesMatch "^(\.env|\.htaccess|\.gitignore|composer\.(json|lock)|package(-lock)?\.json|README\.md)$">
+    Require all denied
+</FilesMatch>
+
+# Front controller - route everything through index.php
+<IfModule mod_rewrite.c>
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !^/api/
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# Cache static assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 6 months"
+    ExpiresByType image/png "access plus 6 months"
+    ExpiresByType image/webp "access plus 6 months"
+    ExpiresByType image/svg+xml "access plus 6 months"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType audio/mpeg "access plus 1 year"
+    ExpiresByType video/mp4 "access plus 1 year"
+</IfModule>
+
+# Compression
 <IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript
-    AddOutputFilterByType DEFLATE application/javascript application/json application/xml
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json
 </IfModule>
 
-# CORS for API
+# Upload limits
+php_value upload_max_filesize 50M
+php_value post_max_size 50M
+php_value max_execution_time 60
+php_value memory_limit 256M
+
+# Allow CORS for service worker scope
 <IfModule mod_headers.c>
-    SetEnvIf Origin "^http(s)?://(localhost|127\.0\.0\.1|nexuschat\.local)$" CORS_ORIGIN=$0
-    Header set Access-Control-Allow-Origin "%{CORS_ORIGIN}e" env=CORS_ORIGIN
-    Header set Access-Control-Allow-Credentials "true" env=CORS_ORIGIN
-    Header merge Vary "Origin"
-</IfModule>
-
-# PHP settings
-<IfModule mod_php.c>
-    php_value upload_max_filesize 50M
-    php_value post_max_size 50M
-    php_value max_execution_time 60
+    Header set Service-Worker-Allowed-Path "/"
 </IfModule>
