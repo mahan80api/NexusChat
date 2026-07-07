@@ -11,16 +11,19 @@ if (empty($_SESSION['user_id'])) {
 }
 
 $currentUser = (new User())->findById($_SESSION['user_id']);
+$userTheme = $currentUser['theme'] ?? 'galaxy';
 ?>
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa" dir="rtl" data-theme="<?= htmlspecialchars($userTheme) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🌌 NexusChat - گفتگو</title>
     <link rel="stylesheet" href="assets/css/galaxy.css">
+    <link rel="stylesheet" href="assets/css/themes.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>">
     <meta name="user-id" content="<?= $currentUser['id'] ?>">
+    <meta name="user-theme" content="<?= htmlspecialchars($userTheme) ?>">
 </head>
 <body>
     <div class="starfield"></div>
@@ -34,14 +37,23 @@ $currentUser = (new User())->findById($_SESSION['user_id']);
         'display_name' => $currentUser['display_name'],
         'avatar'       => $currentUser['avatar'],
         'email'        => $currentUser['email'],
+        'theme'        => $userTheme,
     ], JSON_UNESCAPED_UNICODE) ?>;
     </script>
     <script src="assets/js/galaxy.js"></script>
     <script src="assets/js/voice.js"></script>
     <script src="assets/js/search.js"></script>
+    <script src="assets/js/theme.js"></script>
     <script src="assets/js/chat.js"></script>
     <script>
     App.currentUser = window.currentUser;
+
+    // Initialize theme BEFORE anything renders (prevent flash)
+    (function() {
+        const saved = localStorage.getItem('nc_theme') || window.currentUser.theme || 'galaxy';
+        if (window.ThemeManager) ThemeManager.apply(saved, { skipTransition: true });
+    })();
+
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             const l = document.getElementById('initialLoader');
@@ -49,7 +61,8 @@ $currentUser = (new User())->findById($_SESSION['user_id']);
             ChatUI.start();
         }, 300);
 
-        // Ctrl+K opens search
+        if (window.ThemeManager) ThemeManager.init();
+
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
