@@ -70,11 +70,14 @@ CREATE TABLE IF NOT EXISTS messages (
     forwarded_from_sender_id INT NULL,
     content TEXT,
     encrypted_content LONGTEXT,
-    type ENUM('text','image','video','file','voice','location','contact','sticker') DEFAULT 'text',
+    type ENUM('text','image','video','file','voice','location','contact','sticker','poll') DEFAULT 'text',
     file_path VARCHAR(255),
     file_size BIGINT,
     mime_type VARCHAR(100),
     thumbnail VARCHAR(255),
+    duration INT NULL,
+    waveform_path VARCHAR(255) NULL,
+    poll_id INT NULL,
     is_encrypted TINYINT(1) DEFAULT 0,
     is_edited TINYINT(1) DEFAULT 0,
     is_deleted TINYINT(1) DEFAULT 0,
@@ -184,11 +187,77 @@ CREATE TABLE IF NOT EXISTS saved_messages (
     FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- ALTER existing DB: add forward columns
+CREATE TABLE IF NOT EXISTS polls (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    chat_id INT NOT NULL,
+    created_by INT NOT NULL,
+    question VARCHAR(500) NOT NULL,
+    is_multiple TINYINT(1) DEFAULT 0,
+    is_anonymous TINYINT(1) DEFAULT 0,
+    closes_at DATETIME NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS poll_options (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    poll_id INT NOT NULL,
+    text VARCHAR(300) NOT NULL,
+    position INT DEFAULT 0,
+    FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS poll_votes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    poll_id INT NOT NULL,
+    option_id INT NOT NULL,
+    user_id INT NOT NULL,
+    voted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_vote (poll_id, option_id, user_id),
+    FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE,
+    FOREIGN KEY (option_id) REFERENCES poll_options(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS message_link_previews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    message_id INT NOT NULL,
+    url TEXT NOT NULL,
+    title VARCHAR(300),
+    description TEXT,
+    image_url TEXT,
+    site_name VARCHAR(100),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS stickers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pack_id INT,
+    name VARCHAR(100),
+    image_path VARCHAR(255) NOT NULL,
+    emoji VARCHAR(10),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS sticker_packs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    cover VARCHAR(255),
+    is_default TINYINT(1) DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- ALTER existing DB to add new columns
 ALTER TABLE messages
     ADD COLUMN IF NOT EXISTS forwarded_from_id INT NULL,
     ADD COLUMN IF NOT EXISTS forwarded_from_chat_id INT NULL,
-    ADD COLUMN IF NOT EXISTS forwarded_from_sender_id INT NULL;
+    ADD COLUMN IF NOT EXISTS forwarded_from_sender_id INT NULL,
+    ADD COLUMN IF NOT EXISTS duration INT NULL,
+    ADD COLUMN IF NOT EXISTS waveform_path VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS poll_id INT NULL;
 
 ALTER TABLE users
     ADD COLUMN IF NOT EXISTS dnd_until DATETIME NULL;
