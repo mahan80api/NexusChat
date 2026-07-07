@@ -1,181 +1,80 @@
 <?php
-/**
- * NexusChat - Channels API
- */
 define('NEXUSCHAT_API', true);
 require_once __DIR__ . '/../config/config.php';
-header('Content-Type: application/json');
+
 header('Access-Control-Allow-Origin: ' . APP_URL);
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Credentials: true');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
 require_auth();
-$action = $_GET['action'] ?? $_POST['action'] ?? 'list';
-$userId = current_user_id();
-$cm = new ChannelManager();
+$uid = current_user_id();
+$action = $_GET['action'] ?? $_POST['action'] ?? '';
+$db = Database::getInstance();
 
 try {
     switch ($action) {
+        case 'list':
+            $lat = (float)($_GET['lat'] ?? 0);
+            $lng = (float)($_GET['lng'] ?? 0);
+            $radius = (int)($_GET['radius'] ?? 50);
+            $cat = sanitize($_GET['category'] ?? '');
+            $sql = "SELECT c.*, u.display_name as owner_name,
+                (SELECT COUNT(*) FROM chat_members WHERE chat_id = c.id) as member_count
+                FROM chats c
+                LEFT JOIN users u ON u.id = c.owner_id
+                WHERE c.type = 'channel' AND c.is_public = 1";
+            $params = [];
+            if ($cat) { $sql .= " AND c.category = ?"; $params[] = $cat; }
+            $sql .= " ORDER BY c.updated_at DESC LIMIT 50";
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            json_response(['success' => true, 'channels' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+            break;
+
         case 'create':
-            $name = $_POST['name'] ?? '';
-            $username = $_POST['username'] ?? '';
-            $description = $_POST['description'] ?? '';
-            $isPublic = !empty($_POST['is_public']) ? 1 : 0;
-            $avatar = $_POST['avatar'] ?? null;
-            $id = $cm->createChannel($userId, $name, $username, $description, $isPublic, $avatar);
-            json_response(['success' => true, 'channel_id' => $id]);
+            $name = sanitize($_POST['name'] ?? '');
+            $desc = sanitize($_POST['description'] ?? '');
+            $cat = sanitize($_POST['category'] ?? 'general');
+            $lat = $_POST['lat'] ?? null;
+            $lng = $_POST['lng'] ?? null;
+            if (!$name) json_response(['success' => false, 'message' => 'no_name'], 400);
+            $db->prepare("INSERT INTO chats (type, name, description, owner_id, is_public, category, lat, lng) VALUES ('channel', ?, ?, ?, 1, ?, ?, ?)")
+                ->execute([$name, $desc, $uid, $cat, $lat, $lng]);
+            $chatId = (int)$db->lastInsertId();
+            $db->prepare("INSERT INTO chat_members (chat_id, user_id, role) VALUES (?, ?, 'owner')")
+                ->execute([$chatId, $uid]);
+            json_response(['success' => true, 'chat_id' => $chatId]);
             break;
 
-        case 'discover':
-            $q = $_GET['q'] ?? '';
-            $channels = $cm->discoverChannels(30, $q);
-            json_response(['success' => true, 'channels' => $channels]);
-            break;
-
-        case 'my_channels':
-            json_response(['success' => true, 'channels' => $cm->getMyChannels($userId)]);
-            break;
-
-        case 'owned':
-            json_response(['success' => true, 'channels' => $cm->getOwnedChannels($userId)]);
-            break;
-
-        case 'info':
-            $channelId = (int)($_GET['channel_id'] ?? 0);
-            $info = $cm->getChannelById($channelId);
-            if ($info) {
-                $info['is_subscribed'] = $cm->isSubscribed($channelId, $userId);
-                $info['is_admin'] = $cm->isAdmin($channelId, $userId);
-                $info['stats'] = $cm->getStats($channelId);
-            }
-            json_response(['success' => true, 'channel' => $info]);
-            break;
-
-        case 'update':
-            $channelId = (int)($_POST['channel_id'] ?? 0);
-            $data = [];
-            foreach (['name', 'description', 'avatar', 'is_public', 'slow_mode_seconds', 'sign_messages'] as $f) {
-                if (isset($_POST[$f])) $data[$f] = $_POST[$f];
-            }
-            $cm->updateChannel($channelId, $userId, $data);
-            json_response(['success' => true]);
-            break;
-
-        case 'delete':
-            $channelId = (int)($_POST['channel_id'] ?? 0);
-            $cm->deleteChannel($channelId, $userId);
-            json_response(['success' => true]);
-            break;
-
-        // ====== Subscribers ======
         case 'subscribe':
-            $channelId = (int)($_POST['channel_id'] ?? 0);
-            $cm->subscribe($channelId, $userId);
+            $chatId = (int)($_POST['chat_id'] ?? 0);
+            $stmt = $db->prepare("SELECT 1 FROM chat_members WHERE chat_id = ? AND user_id = ?");
+            $stmt->execute([$chatId, $uid]);
+            if (!$stmt->fetch()) {
+                $db->prepare("INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)")->execute([$chatId, $uid]);
+            }
             json_response(['success' => true]);
             break;
 
         case 'unsubscribe':
-            $channelId = (int)($_POST['channel_id'] ?? 0);
-            $cm->unsubscribe($channelId, $userId);
+            $chatId = (int)($_POST['chat_id'] ?? 0);
+            $db->prepare("DELETE FROM chat_members WHERE chat_id = ? AND user_id = ?")->execute([$chatId, $uid]);
             json_response(['success' => true]);
             break;
 
-        case 'subscribers':
-            $channelId = (int)($_GET['channel_id'] ?? 0);
-            json_response(['success' => true, 'subscribers' => $cm->getSubscribers($channelId)]);
-            break;
-
-        // ====== Admins ======
-        case 'add_admin':
-            $channelId = (int)($_POST['channel_id'] ?? 0);
-            $adminUserId = (int)($_POST['user_id'] ?? 0);
-            $role = $_POST['role'] ?? 'admin';
-            $cm->addAdmin($channelId, $adminUserId, $role, $userId);
-            json_response(['success' => true]);
-            break;
-
-        case 'remove_admin':
-            $channelId = (int)($_POST['channel_id'] ?? 0);
-            $adminUserId = (int)($_POST['user_id'] ?? 0);
-            $cm->removeAdmin($channelId, $adminUserId, $userId);
-            json_response(['success' => true]);
-            break;
-
-        case 'admins':
-            $channelId = (int)($_GET['channel_id'] ?? 0);
-            json_response(['success' => true, 'admins' => $cm->getChannelAdmins($channelId)]);
-            break;
-
-        // ====== Posts ======
-        case 'publish':
-            $channelId = (int)($_POST['channel_id'] ?? 0);
-            $content = trim($_POST['content'] ?? '');
-            $media = $_FILES['media'] ?? null;
-            $pinned = !empty($_POST['pinned']);
-            $mediaPath = null;
-            $mediaType = 'text';
-            if ($media && $media['error'] === UPLOAD_ERR_OK) {
-                $dir = 'assets/uploads/channel/';
-                if (!is_dir($dir)) mkdir($dir, 0755, true);
-                $ext = strtolower(pathinfo($media['name'], PATHINFO_EXTENSION));
-                $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm'];
-                if (!in_array($ext, $allowed)) throw new Exception('invalid_file_type');
-                $name = uniqid() . '.' . $ext;
-                move_uploaded_file($media['tmp_name'], $dir . $name);
-                $mediaPath = 'channel/' . $name;
-                $mediaType = in_array($ext, ['mp4', 'webm']) ? 'video' : 'image';
-            }
-            $postId = $cm->publishPost($channelId, $userId, $content, $mediaPath, $mediaType, ['pinned' => $pinned]);
-            json_response(['success' => true, 'post_id' => $postId]);
-            break;
-
-        case 'posts':
-            $channelId = (int)($_GET['channel_id'] ?? 0);
-            $limit = min(50, (int)($_GET['limit'] ?? 20));
-            $offset = (int)($_GET['offset'] ?? 0);
-            $posts = $cm->getPosts($channelId, $limit, $offset);
-            foreach ($posts as &$p) $cm->recordView($p['id'], $userId);
-            json_response(['success' => true, 'posts' => $posts]);
-            break;
-
-        case 'delete_post':
-            $postId = (int)($_POST['post_id'] ?? 0);
-            $cm->deletePost($postId, $userId);
-            json_response(['success' => true]);
-            break;
-
-        case 'pin_post':
-            $postId = (int)($_POST['post_id'] ?? 0);
-            $pin = !empty($_POST['pin']);
-            $cm->pinPost($postId, $userId, $pin);
-            json_response(['success' => true]);
-            break;
-
-        case 'react':
-            $postId = (int)($_POST['post_id'] ?? 0);
-            $emoji = $_POST['emoji'] ?? '';
-            $cm->reactToPost($postId, $userId, $emoji);
-            json_response(['success' => true, 'reactions' => $cm->getPostReactions($postId)]);
-            break;
-
-        case 'unreact':
-            $postId = (int)($_POST['post_id'] ?? 0);
-            $emoji = $_POST['emoji'] ?? '';
-            $cm->unreactToPost($postId, $userId, $emoji);
-            json_response(['success' => true]);
-            break;
-
-        // ====== Analytics ======
-        case 'stats':
-            $channelId = (int)($_GET['channel_id'] ?? 0);
-            json_response(['success' => true, 'stats' => $cm->getStats($channelId), 'growth' => $cm->getGrowthData($channelId)]);
-            break;
-
-        // ====== Feed ======
-        case 'feed':
-            $limit = min(50, (int)($_GET['limit'] ?? 30));
-            json_response(['success' => true, 'feed' => $cm->getMyFeed($userId, $limit)]);
+        case 'nearby':
+            $lat = (float)($_GET['lat'] ?? 0);
+            $lng = (float)($_GET['lng'] ?? 0);
+            $radius = (int)($_GET['radius'] ?? 10);
+            if (!$lat || !$lng) json_response(['success' => false, 'message' => 'no_location'], 400);
+            $stmt = $db->prepare("SELECT c.*,
+                (6371 * acos(cos(radians(?)) * cos(radians(c.lat)) * cos(radians(c.lng) - radians(?)) + sin(radians(?)) * sin(radians(c.lat)))) as distance_km
+                FROM chats c WHERE c.type = 'channel' AND c.is_public = 1 AND c.lat IS NOT NULL
+                HAVING distance_km < ? ORDER BY distance_km ASC LIMIT 50");
+            $stmt->execute([$lat, $lng, $lat, $radius]);
+            json_response(['success' => true, 'channels' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
             break;
 
         default:
