@@ -27,6 +27,7 @@ $userTheme = $currentUser['theme'] ?? 'galaxy';
     <link rel="stylesheet" href="assets/css/stickers.css">
     <link rel="stylesheet" href="assets/css/polls.css">
     <link rel="stylesheet" href="assets/css/push.css">
+    <link rel="stylesheet" href="assets/css/stats.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>">
     <meta name="user-id" content="<?= $currentUser['id'] ?>">
     <meta name="user-theme" content="<?= htmlspecialchars($userTheme) ?>">
@@ -55,6 +56,7 @@ $userTheme = $currentUser['theme'] ?? 'galaxy';
     <script src="assets/js/stickers.js"></script>
     <script src="assets/js/polls.js"></script>
     <script src="assets/js/push.js"></script>
+    <script src="assets/js/stats.js"></script>
     <script src="assets/js/chat.js"></script>
     <script>
     App.currentUser = window.currentUser;
@@ -77,7 +79,6 @@ $userTheme = $currentUser['theme'] ?? 'galaxy';
         if (window.PollUI)         PollUI.startTimerUpdater();
         if (window.PushUI)         PushUI.init();
 
-        // Listen for service worker messages
         navigator.serviceWorker?.addEventListener('message', (e) => {
           if (e.data?.type === 'navigate' && e.data.url) {
             const chatId = e.data.data?.chat_id;
