@@ -1,28 +1,54 @@
-# Logs
-logs/
-*.log
-error.log
+# Environment
+.env
+.env.local
+*.env
 
-# Uploads
-assets/uploads/avatars/*
-!assets/uploads/avatars/.gitkeep
-assets/uploads/stories/*
-!assets/uploads/stories/.gitkeep
-assets/uploads/files/*
-!assets/uploads/files/.gitkeep
-assets/uploads/voice/*
-!assets/uploads/voice/.gitkeep
+# Logs
+logs/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+vendor/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+.DS_Store
+
+# Uploads (except .gitkeep)
+uploads/*
+!uploads/.gitkeep
+!uploads/avatars/.gitkeep
+!uploads/images/.gitkeep
+!uploads/videos/.gitkeep
+!uploads/voice/.gitkeep
+!uploads/files/.gitkeep
+!uploads/stickers/.gitkeep
+
+# Cache
+.cache/
+.tmp/
+*.cache
 
 # OS
-.DS_Store
 Thumbs.db
 
-# Env
-.env
-.env.local
+# Test coverage
+coverage/
+*.lcov
+
+# Build artifacts
+dist/
+build/
+*.min.js
+*.min.css
+
+# PHP specific
+*.bak
+*.orig
+.phpunit.result.cache
