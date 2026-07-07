@@ -256,6 +256,7 @@ const ChatUI = {
         </div>
         <div class="chat-actions">
           <button class="icon-btn" id="searchInChatBtn" title="جستجو در این چت">🔍</button>
+          <button class="icon-btn" id="pollBtn" title="نظرسنجی">📊</button>
           <button class="icon-btn" id="callVoiceBtn" title="تماس صوتی">📞</button>
           <button class="icon-btn" id="callVideoBtn" title="تماس تصویری">📹</button>
           <button class="icon-btn" id="chatInfoBtn" title="اطلاعات">ℹ</button>
@@ -283,6 +284,7 @@ const ChatUI = {
     });
     document.getElementById('emojiBtn').addEventListener('click', () => this.toggleEmojiPicker());
     document.getElementById('stickerBtn').addEventListener('click', () => StickerUI.open(chat.id));
+    document.getElementById('pollBtn').addEventListener('click',   () => this.createPoll());
     document.getElementById('chatInfoBtn').addEventListener('click', () => DNDManager.showChatInfoWithMute(chat));
     document.getElementById('callVoiceBtn').addEventListener('click', () => App.toast('🚧 تماس صوتی - به زودی'));
     document.getElementById('callVideoBtn').addEventListener('click', () => App.toast('🚧 تماس تصویری - به زودی'));
@@ -301,6 +303,14 @@ const ChatUI = {
     });
   },
 
+  createPoll() {
+    PollUI.showCreator(App.currentChat.id, (poll) => {
+      const res = { success: true, message: { id: poll.message_id, type: 'poll', sender_id: App.currentUser.id, content: '📊 ' + poll.question, created_at: new Date().toISOString(), metadata: JSON.stringify({ poll_id: poll.id }) } };
+      this.appendMessage(res.message);
+      this.loadChats();
+    });
+  },
+
   // ============ Messages ============
   async loadMessages(chatId) {
     const res = await App.api('messages', 'list&chat_id=' + chatId);
@@ -308,6 +318,21 @@ const ChatUI = {
       this.renderMessages(res.messages);
       VoicePlayer.bind();
       App.api('chats', 'read', this.toFormData({ chat_id: chatId, last_message_id: res.messages.length ? res.messages[res.messages.length-1].id : 0 }));
+      // Load polls separately
+      this.loadPollsForMessages(chatId);
+    }
+  },
+
+  async loadPollsForMessages(chatId) {
+    const res = await App.api('polls', 'by_chat&chat_id=' + chatId);
+    if (res.success) {
+      res.polls.forEach(poll => {
+        const pollEl = document.querySelector(`.poll-card[data-poll-id="${poll.id}"]`);
+        if (pollEl) {
+          pollEl.outerHTML = PollUI.render(poll.message_id, poll);
+        }
+      });
+      document.querySelectorAll('.poll-card').forEach(el => PollUI.bind(el));
     }
   },
 
@@ -333,13 +358,14 @@ const ChatUI = {
       });
     });
 
-    // Render link previews
     if (window.LinkPreviewUI) {
       area.querySelectorAll('.message').forEach(msgEl => {
         const contentEl = msgEl.querySelector('.message-content');
         if (contentEl) LinkPreviewUI.render(contentEl.textContent, msgEl);
       });
     }
+
+    area.querySelectorAll('.poll-card').forEach(el => PollUI.bind(el));
   },
 
   renderMessage(m) {
@@ -355,6 +381,15 @@ const ChatUI = {
       media = VoicePlayer.render(m);
     } else if (m.type === 'sticker' && m.file_path) {
       media = `<div class="message-sticker"><img src="assets/uploads/stickers/${m.file_path}" alt="sticker"></div>`;
+    } else if (m.type === 'poll' && m.metadata) {
+      const meta = typeof m.metadata === 'string' ? JSON.parse(m.metadata) : m.metadata;
+      if (meta && meta.poll_id) {
+        // Will be replaced async by loadPollsForMessages
+        return `<div class="message ${cls}" data-message-id="${m.id}">
+          <div class="message-content">${App.escapeHTML(m.content || '📊')}</div>
+          <div class="message-time">${App.formatTime(m.created_at)}</div>
+        </div>`;
+      }
     } else if (m.type === 'file' && m.file_path) {
       media = `<a class="message-file" href="assets/uploads/${m.file_path}" download>
                 <span>📄</span>
@@ -442,6 +477,10 @@ const ChatUI = {
     area.insertAdjacentHTML('beforeend', this.renderMessage(m));
     area.scrollTop = area.scrollHeight;
     VoicePlayer.bind();
+
+    if (m.type === 'poll') {
+      this.loadPollsForMessages(App.currentChat.id);
+    }
 
     if (window.LinkPreviewUI && m.content) {
       const lastMsg = area.querySelector(`.message[data-message-id="${m.id}"]`);
