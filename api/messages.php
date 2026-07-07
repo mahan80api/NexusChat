@@ -1,6 +1,7 @@
 <?php
 /**
  * NexusChat - Messages API
+ * Endpoints: send, list, edit, delete, react, pin, forward, search
  */
 define('NEXUSCHAT_API', true);
 require_once __DIR__ . '/../config/config.php';
@@ -79,7 +80,7 @@ try {
             }
             $messages = $msg->getMessages($chatId, $limit, $before);
 
-            // Attach reply info
+            // Attach reply + reactions
             foreach ($messages as &$m) {
                 if ($m['reply_to_id']) {
                     $reply = $msg->findById($m['reply_to_id']);
@@ -129,6 +130,54 @@ try {
                 throw new Exception('سنجاق کردن ناموفق');
             }
             json_response(['success' => true]);
+            break;
+
+        case 'forward':
+            $messageId   = (int)($_POST['message_id'] ?? 0);
+            $fromChatId  = (int)($_POST['from_chat_id'] ?? 0);
+            $toChatIds   = $_POST['to_chat_ids'] ?? [];
+            if (is_string($toChatIds)) $toChatIds = json_decode($toChatIds, true) ?: [];
+            if (!is_array($toChatIds)) $toChatIds = [];
+
+            if (!$messageId || !$fromChatId || empty($toChatIds)) {
+                throw new Exception('پارامترهای ناقص');
+            }
+            // user must be member of source chat
+            if (!$chat->isMember($fromChatId, $userId)) {
+                throw new Exception('دسترسی غیرمجاز به چت مبدا');
+            }
+
+            $results = [];
+            foreach ($toChatIds as $toChatId) {
+                $toChatId = (int)$toChatId;
+                if (!$chat->isMember($toChatId, $userId)) continue;
+                try {
+                    $forwarded = $msg->forward($messageId, $fromChatId, $toChatId, $userId);
+                    $results[] = ['chat_id' => $toChatId, 'message' => $forwarded, 'ok' => true];
+
+                    // Notify members of destination chat
+                    $members = $chat->getMembers($toChatId);
+                    $sender = $user->getPublicProfile($userId);
+                    $notif = new Notification();
+                    foreach ($members as $m) {
+                        if ($m['id'] != $userId) {
+                            $notif->create($m['id'], 'message', $sender['display_name'], '↪ پیام فوروارد‌شده', $toChatId);
+                        }
+                    }
+                } catch (Exception $ex) {
+                    $results[] = ['chat_id' => $toChatId, 'ok' => false, 'error' => $ex->getMessage()];
+                }
+            }
+            json_response(['success' => true, 'forwarded' => $results]);
+            break;
+
+        case 'search':
+            $query = sanitize($_GET['q'] ?? $_POST['q'] ?? '');
+            if (mb_strlen($query) < 2) {
+                json_response(['success' => true, 'results' => []]);
+            }
+            $results = $msg->search($userId, $query);
+            json_response(['success' => true, 'results' => $results]);
             break;
 
         default:
