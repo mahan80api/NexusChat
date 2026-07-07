@@ -20,6 +20,7 @@ const ChatUI = {
               <button class="icon-btn theme-toggle-btn" id="globalSearchBtn" title="جستجو (Ctrl+K)">🔍</button>
               <button class="icon-btn" id="savedBtn" title="ذخیره‌شده‌ها">⭐</button>
               <button class="icon-btn" id="statsBtn" title="آمار و تحلیل">📊</button>
+              <button class="icon-btn" id="callsBtn" title="تاریخچه تماس‌ها">📞</button>
               <button class="icon-btn" id="themeBtn" title="تم (Ctrl+Shift+T)">🎨</button>
               <button class="icon-btn" id="dndBtn" title="حالت مزاحم نشوید">🌙</button>
               <button class="icon-btn" id="pushBtn" title="اعلان‌ها (Push)">🔔</button>
@@ -58,6 +59,7 @@ const ChatUI = {
     document.getElementById('dndBtn').addEventListener('click', () => DNDManager.toggle());
     document.getElementById('pushBtn').addEventListener('click', () => PushUI.open());
     document.getElementById('statsBtn').addEventListener('click', () => StatsUI.open());
+    document.getElementById('callsBtn').addEventListener('click', () => CallManager.showCallHistory());
     document.getElementById('savedBtn').addEventListener('click', () => {
       SearchUI.open();
       setTimeout(() => {
@@ -301,8 +303,8 @@ const ChatUI = {
     document.getElementById('stickerBtn').addEventListener('click', () => StickerUI.open(chat.id));
     document.getElementById('pollBtn').addEventListener('click',   () => this.createPoll());
     document.getElementById('chatInfoBtn').addEventListener('click', () => DNDManager.showChatInfoWithMute(chat));
-    document.getElementById('callVoiceBtn').addEventListener('click', () => App.toast('🚧 تماس صوتی - به زودی'));
-    document.getElementById('callVideoBtn').addEventListener('click', () => App.toast('🚧 تماس صوتی - به زودی'));
+    document.getElementById('callVoiceBtn').addEventListener('click', () => this.startVoiceCall(chat));
+    document.getElementById('callVideoBtn').addEventListener('click', () => this.startVideoCall(chat));
     document.getElementById('searchInChatBtn').addEventListener('click', () => {
       SearchUI.open();
       setTimeout(() => {
@@ -316,6 +318,24 @@ const ChatUI = {
       if (VoiceRecorder.isRecording) VoiceRecorder.stop();
       else VoiceRecorder.start();
     });
+  },
+
+  async startVoiceCall(chat) {
+    if (chat.type === 'group') {
+      CallManager.startCall(chat.id, 'voice', true, []);
+    } else {
+      const otherUser = chat.other_user;
+      CallManager.startCall(chat.id, 'voice', false, [otherUser.id]);
+    }
+  },
+
+  async startVideoCall(chat) {
+    if (chat.type === 'group') {
+      CallManager.startCall(chat.id, 'video', true, []);
+    } else {
+      const otherUser = chat.other_user;
+      CallManager.startCall(chat.id, 'video', false, [otherUser.id]);
+    }
   },
 
   createPoll() {
