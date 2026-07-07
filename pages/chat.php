@@ -28,6 +28,7 @@ $userTheme = $currentUser['theme'] ?? 'galaxy';
     <link rel="stylesheet" href="assets/css/polls.css">
     <link rel="stylesheet" href="assets/css/push.css">
     <link rel="stylesheet" href="assets/css/stats.css">
+    <link rel="stylesheet" href="assets/css/calls.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>">
     <meta name="user-id" content="<?= $currentUser['id'] ?>">
     <meta name="user-theme" content="<?= htmlspecialchars($userTheme) ?>">
@@ -57,6 +58,7 @@ $userTheme = $currentUser['theme'] ?? 'galaxy';
     <script src="assets/js/polls.js"></script>
     <script src="assets/js/push.js"></script>
     <script src="assets/js/stats.js"></script>
+    <script src="assets/js/calls.js"></script>
     <script src="assets/js/chat.js"></script>
     <script>
     App.currentUser = window.currentUser;
@@ -78,6 +80,24 @@ $userTheme = $currentUser['theme'] ?? 'galaxy';
         if (window.StickerUI)      StickerUI.init();
         if (window.PollUI)         PollUI.startTimerUpdater();
         if (window.PushUI)         PushUI.init();
+
+        // WebSocket connection for real-time call signaling
+        if (window.WebSocket) {
+            try {
+                const ws = new WebSocket('ws://' + location.hostname + ':8080');
+                ws.onopen = () => ws.send(JSON.stringify({ type: 'auth', user_id: window.currentUser.id }));
+                ws.onmessage = (e) => {
+                    const m = JSON.parse(e.data);
+                    if (m.type === 'call_invite' && m.to_user_id == window.currentUser.id) {
+                        CallManager.showIncomingCall(m);
+                    } else if (m.type === 'presence') {
+                        if (m.status === 'online') App.markOnline(m.user_id);
+                        else App.markOffline(m.user_id);
+                    }
+                };
+                window._ws = ws;
+            } catch (e) { console.log('WS unavailable, falling back to polling'); }
+        }
 
         navigator.serviceWorker?.addEventListener('message', (e) => {
           if (e.data?.type === 'navigate' && e.data.url) {
