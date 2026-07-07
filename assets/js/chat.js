@@ -258,7 +258,6 @@ const ChatUI = {
     area.innerHTML = messages.map(m => this.renderMessage(m)).join('');
     area.scrollTop = area.scrollHeight;
 
-    // attach reaction handlers
     area.querySelectorAll('.reaction-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -295,12 +294,23 @@ const ChatUI = {
       <div class="reply-preview">
         <strong>${App.escapeHTML(m.reply_to.sender_name || '')}</strong>: ${App.escapeHTML((m.reply_to.content || '').slice(0, 60))}
       </div>` : '';
+
+    // Forwarded header
+    const fwd = m.forward_info ? `
+      <div class="forwarded-header">
+        <span class="fwd-icon">↪</span>
+        <span>فوروارد از </span>
+        <span class="fwd-name">${App.escapeHTML(m.forward_info.sender?.display_name || 'کاربر')}</span>
+      </div>
+    ` : '';
+
     const reactions = (m.reactions || []).length ? `
       <div class="reactions">
-        ${m.reactions.map(r => `<div class="reaction ${r.user_id == App.currentUser.id ? 'active' : ''}">${r.emoji} ${r.count}</div>`).join('')}
+        ${m.reactions.map(r => `<div class="reaction ${r.user_ids && r.user_ids.includes(App.currentUser.id) ? 'active' : ''}">${r.emoji} ${r.count}</div>`).join('')}
       </div>` : '';
     return `
       <div class="message ${cls}" data-message-id="${m.id}">
+        ${fwd}
         ${reply}
         ${m.content ? `<div class="message-content">${App.escapeHTML(m.content)}</div>` : ''}
         ${media}
@@ -363,7 +373,6 @@ const ChatUI = {
     const fd = this.toFormData({ message_id: messageId, emoji });
     const res = await App.api('messages', 'react', fd);
     if (res.success) {
-      const area = document.getElementById('messagesArea');
       this.loadMessages(App.currentChat.id);
     }
   },
@@ -376,6 +385,7 @@ const ChatUI = {
     menu.innerHTML = `
       <div class="context-item" data-act="react">❤️ واکنش</div>
       <div class="context-item" data-act="reply">↩ پاسخ</div>
+      <div class="context-item" data-act="forward">↪ فوروارد</div>
       <div class="context-item" data-act="copy">📋 کپی</div>
       <div class="context-item" data-act="pin">📌 سنجاق</div>
       <div class="context-item danger" data-act="delete">🗑 حذف</div>
@@ -389,15 +399,20 @@ const ChatUI = {
         const act = item.dataset.act;
         if (act === 'react') {
           const emojis = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
-          const e = prompt('ایموجی انتخاب کنید: ' + emojis.join(' '));
-          if (e) await this.reactToMessage(messageId, e);
+          const ee = prompt('ایموجی انتخاب کنید: ' + emojis.join(' '));
+          if (ee) await this.reactToMessage(messageId, ee);
         } else if (act === 'reply') {
           const m = await App.api('messages', 'list&chat_id=' + App.currentChat.id + '&limit=1000');
           const msg = m.messages.find(x => x.id == messageId);
           if (msg) {
             App.replyTo = msg;
             App.toast('در حال پاسخ به پیام');
+            document.getElementById('messageInput')?.focus();
           }
+        } else if (act === 'forward') {
+          close();
+          this.showForwardModal(messageId);
+          return;
         } else if (act === 'copy') {
           const m = await App.api('messages', 'list&chat_id=' + App.currentChat.id + '&limit=1000');
           const msg = m.messages.find(x => x.id == messageId);
@@ -416,6 +431,84 @@ const ChatUI = {
         }
         close();
       });
+    });
+  },
+
+  // ============ Forward modal ============
+  async showForwardModal(messageId) {
+    if (!App.chats.length) { App.toast('چتی برای فوروارد وجود ندارد', 'error'); return; }
+    let selected = new Set();
+    const html = `
+      <h3 class="modal-title">↪ فوروارد به ...</h3>
+      <input class="forward-search" id="fwdSearch" placeholder="جستجو در چت‌ها...">
+      <div class="forward-list" id="fwdList">
+        ${App.chats.map(c => {
+          const name = c.type === 'private' && c.other_user ? c.other_user.display_name : (c.name || 'گروه');
+          const avatar = c.other_user?.avatar || c.avatar;
+          return `
+            <div class="forward-chat-item" data-chat-id="${c.id}">
+              <div class="avatar" style="width:40px;height:40px;font-size:14px;">
+                ${avatar ? `<img src="assets/uploads/avatars/${avatar}" onerror="this.outerHTML='${App.getInitials(name)}'">`
+                        : App.getInitials(name)}
+              </div>
+              <div class="chat-info">
+                <div class="chat-name">${App.escapeHTML(name)}</div>
+                <div class="chat-preview">${c.type === 'private' ? 'خصوصی' : c.type === 'group' ? 'گروه' : 'کانال'}</div>
+              </div>
+              <div class="forward-check">✓</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="App.closeModal()">انصراف</button>
+        <button class="btn-primary" id="fwdSubmit" style="width:auto; padding:10px 24px;">فوروارد (0)</button>
+      </div>
+    `;
+    App.showModal(html);
+
+    const updateCount = () => {
+      const btn = document.getElementById('fwdSubmit');
+      if (btn) btn.textContent = `↪ فوروارد (${selected.size})`;
+    };
+
+    document.querySelectorAll('.forward-chat-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = parseInt(el.dataset.chatId);
+        if (selected.has(id)) {
+          selected.delete(id);
+          el.classList.remove('selected');
+        } else {
+          selected.add(id);
+          el.classList.add('selected');
+        }
+        updateCount();
+      });
+    });
+
+    document.getElementById('fwdSearch').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      document.querySelectorAll('.forward-chat-item').forEach(item => {
+        item.style.display = item.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+
+    document.getElementById('fwdSubmit').addEventListener('click', async () => {
+      if (!selected.size) { App.toast('یک چت انتخاب کنید', 'error'); return; }
+      const fd = new FormData();
+      fd.append('message_id', messageId);
+      fd.append('from_chat_id', App.currentChat.id);
+      fd.append('to_chat_ids', JSON.stringify([...selected]));
+      App.showLoading();
+      const res = await App.api('messages', 'forward', fd);
+      App.hideLoading();
+      if (res.success) {
+        const okCount = res.forwarded.filter(r => r.ok).length;
+        App.toast(`به ${okCount} چت فوروارد شد ✨`, 'success');
+        App.closeModal();
+      } else {
+        App.toast(res.message || 'خطا', 'error');
+      }
     });
   },
 
@@ -580,7 +673,6 @@ const ChatUI = {
     App.toast('ℹ ' + (chat.name || 'گفتگو') + ' · ' + (chat.other_user ? chat.other_user.display_name : ''), 'info');
   },
 
-  // ============ Search ============
   async searchUsers(q) {
     const res = await App.api('users', 'search&q=' + encodeURIComponent(q));
     if (res.success) {
@@ -596,7 +688,6 @@ const ChatUI = {
     }
   },
 
-  // ============ Long polling for new messages ============
   setupMessagePolling() {
     if (App.messagePollingInterval) clearInterval(App.messagePollingInterval);
     App.messagePollingInterval = setInterval(async () => {
