@@ -1,0 +1,44 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  php-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: PHP syntax check
+        run: |
+          sudo apt-get install -y php-cli
+          find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \;
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run security checks
+        run: |
+          echo "Checking for hardcoded secrets..."
+          if grep -r "password.*=.*['\"]" --include="*.php" --include="*.js" .; then
+            echo "⚠ Found potential hardcoded credentials"
+            exit 1
+          fi
+          echo "✓ No hardcoded secrets found"
+
+  deploy-demo:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy demo to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          publish_branch: gh-pages
+          keep_files: false
+          exclude_assets: 'api/**,config/**,db/**,logs/**,uploads/**'
