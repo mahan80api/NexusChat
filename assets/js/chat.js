@@ -17,6 +17,8 @@ const ChatUI = {
           <div class="sidebar-header">
             <div class="sidebar-title gold-text">🌌 NexusChat</div>
             <div style="display:flex; gap:6px;">
+              <button class="icon-btn" id="globalSearchBtn" title="جستجو (Ctrl+K)">🔍</button>
+              <button class="icon-btn" id="savedBtn" title="ذخیره‌شده‌ها">⭐</button>
               <button class="icon-btn" id="newChatBtn" title="چت جدید">✚</button>
               <button class="icon-btn" id="profileBtn" title="پروفایل">👤</button>
               <button class="icon-btn" id="logoutBtn" title="خروج">⏻</button>
@@ -34,6 +36,9 @@ const ChatUI = {
             <div class="empty-state-icon">🌌</div>
             <h2>به کهکشان خوش آمدید</h2>
             <p>یک گفتگو را انتخاب کنید یا چت جدیدی شروع کنید</p>
+            <div style="margin-top:16px; font-size:13px;">
+              <span class="kbd-shortcut">Ctrl</span> + <span class="kbd-shortcut">K</span> برای جستجوی سریع
+            </div>
           </div>
         </main>
       </div>
@@ -42,6 +47,15 @@ const ChatUI = {
     document.getElementById('newChatBtn').addEventListener('click',  () => this.showNewChatModal());
     document.getElementById('profileBtn').addEventListener('click',  () => this.showProfilePanel());
     document.getElementById('logoutBtn').addEventListener('click',   () => App.logout());
+    document.getElementById('globalSearchBtn').addEventListener('click', () => SearchUI.open());
+    document.getElementById('savedBtn').addEventListener('click', () => {
+      SearchUI.open();
+      setTimeout(() => {
+        SearchUI.filters.saved = 1;
+        document.querySelector('.filter-chip[data-filter="saved"]')?.classList.add('active');
+        SearchUI.runSearch(true);
+      }, 200);
+    });
 
     let searchTimeout;
     document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -214,6 +228,7 @@ const ChatUI = {
           <div class="chat-header-status">${isOnline ? '🟢 آنلاین' : ''}${isOnline ? '' : 'آخرین بازدید ' + (chat.last_message_ago || 'نامشخص')}</div>
         </div>
         <div class="chat-actions">
+          <button class="icon-btn" id="searchInChatBtn" title="جستجو در این چت">🔍</button>
           <button class="icon-btn" id="callVoiceBtn" title="تماس صوتی">📞</button>
           <button class="icon-btn" id="callVideoBtn" title="تماس تصویری">📹</button>
           <button class="icon-btn" id="chatInfoBtn" title="اطلاعات">ℹ</button>
@@ -242,6 +257,14 @@ const ChatUI = {
     document.getElementById('chatInfoBtn').addEventListener('click', () => this.showChatInfo(chat));
     document.getElementById('callVoiceBtn').addEventListener('click', () => App.toast('🚧 تماس صوتی - به زودی'));
     document.getElementById('callVideoBtn').addEventListener('click', () => App.toast('🚧 تماس تصویری - به زودی'));
+    document.getElementById('searchInChatBtn').addEventListener('click', () => {
+      SearchUI.open();
+      setTimeout(() => {
+        SearchUI.filters.chat_id = chat.id;
+        SearchUI.updateChatChip(name);
+        SearchUI.runSearch(true);
+      }, 200);
+    });
 
     // Voice button
     document.getElementById('voiceBtn').addEventListener('click', () => {
@@ -406,6 +429,7 @@ const ChatUI = {
       <div class="context-item" data-act="reply">↩ پاسخ</div>
       <div class="context-item" data-act="forward">↪ فوروارد</div>
       <div class="context-item" data-act="copy">📋 کپی</div>
+      <div class="context-item" data-act="save">⭐ ذخیره</div>
       <div class="context-item" data-act="pin">📌 سنجاق</div>
       <div class="context-item danger" data-act="delete">🗑 حذف</div>
     `;
@@ -438,6 +462,11 @@ const ChatUI = {
           if (msg && msg.content) {
             navigator.clipboard.writeText(msg.content);
             App.toast('کپی شد', 'success');
+          }
+        } else if (act === 'save') {
+          const r = await App.api('search', 'save&message_id=' + messageId);
+          if (r.success) {
+            App.toast(r.saved ? '⭐ ذخیره شد' : 'از ذخیره‌ها حذف شد', 'success');
           }
         } else if (act === 'pin') {
           await App.api('messages', 'pin', this.toFormData({ message_id: messageId }));
