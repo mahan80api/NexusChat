@@ -1,5 +1,5 @@
 /**
- * 💬 Chat UI Controller
+ * 💬 Chat UI Controller (with bot support)
  */
 const ChatUI = {
   async start() {
@@ -21,6 +21,7 @@ const ChatUI = {
               <button class="icon-btn" id="savedBtn" title="ذخیره‌شده‌ها">⭐</button>
               <button class="icon-btn" id="statsBtn" title="آمار و تحلیل">📊</button>
               <button class="icon-btn" id="callsBtn" title="تاریخچه تماس‌ها">📞</button>
+              <button class="icon-btn" id="botsBtn" title="ربات‌ها" style="color:var(--gold)">🤖</button>
               <button class="icon-btn" id="themeBtn" title="تم (Ctrl+Shift+T)">🎨</button>
               <button class="icon-btn" id="dndBtn" title="حالت مزاحم نشوید">🌙</button>
               <button class="icon-btn" id="pushBtn" title="اعلان‌ها (Push)">🔔</button>
@@ -44,7 +45,7 @@ const ChatUI = {
             <div style="margin-top:16px; font-size:13px;">
               <span class="kbd-shortcut">Ctrl</span> + <span class="kbd-shortcut">K</span> جستجوی سریع
               <br>
-              <span class="kbd-shortcut">Ctrl</span> + <span class="kbd-shortcut">Shift</span> + <span class="kbd-shortcut">T</span> تغییر تم
+              <span class="kbd-shortcut">/</span> تایپ کنید تا ربات‌ها نمایش داده شوند
             </div>
           </div>
         </main>
@@ -60,6 +61,7 @@ const ChatUI = {
     document.getElementById('pushBtn').addEventListener('click', () => PushUI.open());
     document.getElementById('statsBtn').addEventListener('click', () => StatsUI.open());
     document.getElementById('callsBtn').addEventListener('click', () => CallManager.showCallHistory());
+    document.getElementById('botsBtn').addEventListener('click', () => BotUI.showStore());
     document.getElementById('savedBtn').addEventListener('click', () => {
       SearchUI.open();
       setTimeout(() => {
@@ -68,46 +70,6 @@ const ChatUI = {
         SearchUI.runSearch(true);
       }, 200);
     });
-
-    let searchTimeout;
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-      clearTimeout(searchTimeout);
-      const q = e.target.value;
-      if (q.length < 2) { this.renderChats(App.chats); return; }
-      searchTimeout = setTimeout(() => this.searchUsers(q), 300);
-    });
-
-    const updateThemeIcon = () => {
-      const btn = document.getElementById('themeBtn');
-      if (btn && window.ThemeManager) {
-        const theme = ThemeManager.themes[ThemeManager.current];
-        btn.textContent = theme ? theme.icon : '🎨';
-        btn.title = 'تم فعلی: ' + (theme ? theme.name : '') + ' (Ctrl+Shift+T)';
-      }
-    };
-    updateThemeIcon();
-    setInterval(updateThemeIcon, 1000);
-
-    const updateDndIcon = () => {
-      const btn = document.getElementById('dndBtn');
-      if (btn && window.DNDManager) {
-        btn.textContent = DNDManager.enabled ? '🔕' : '🌙';
-        btn.style.color = DNDManager.enabled ? '#ef4444' : '';
-      }
-    };
-    updateDndIcon();
-    setInterval(updateDndIcon, 1000);
-
-    const updatePushIcon = () => {
-      const btn = document.getElementById('pushBtn');
-      if (btn && window.PushUI) {
-        btn.textContent = PushUI.subscription ? '🔔' : '🔕';
-        btn.style.color = PushUI.subscription ? '' : 'var(--text-dim)';
-        btn.title = PushUI.subscription ? 'Push فعال است - کلیک برای تنظیمات' : 'Push غیرفعال - کلیک برای فعال‌سازی';
-      }
-    };
-    updatePushIcon();
-    setInterval(updatePushIcon, 2000);
   },
 
   toFormData(obj) {
@@ -295,6 +257,7 @@ const ChatUI = {
     document.getElementById('messageInput').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendMessage(); }
     });
+    document.getElementById('messageInput').addEventListener('input', (e) => this.handleInputChange(e));
     document.getElementById('attachBtn').addEventListener('click', () => document.getElementById('fileInput').click());
     document.getElementById('fileInput').addEventListener('change', (e) => {
       if (e.target.files[0]) this.handleFileUpload(e.target.files[0]);
@@ -313,10 +276,51 @@ const ChatUI = {
         SearchUI.runSearch(true);
       }, 200);
     });
-
     document.getElementById('voiceBtn').addEventListener('click', () => {
       if (VoiceRecorder.isRecording) VoiceRecorder.stop();
       else VoiceRecorder.start();
+    });
+  },
+
+  async handleInputChange(e) {
+    const value = e.target.value;
+    // Inline mode: @botname query
+    if (value.includes('@')) {
+      const match = value.match(/@(\w+)\s+(.*)$/);
+      if (match) {
+        const [, botUsername, query] = match;
+        const results = await BotUI.showInlinePicker(query, (r) => {
+          e.target.value = value.replace(/@\w+\s+.*$/, '') + r.message_text;
+          document.querySelector('.inline-bot-picker')?.remove();
+        });
+        if (results.length) this.showInlinePicker(results, (r) => {
+          e.target.value = value.replace(/@\w+\s+.*$/, '') + r.message_text;
+          document.querySelector('.inline-bot-picker')?.remove();
+        });
+      }
+    }
+  },
+
+  showInlinePicker(results, callback) {
+    document.querySelector('.inline-bot-picker')?.remove();
+    if (!results.length) return;
+    const picker = document.createElement('div');
+    picker.className = 'inline-bot-picker';
+    picker.innerHTML = results.map(r => `
+      <div class="inline-bot-result" data-result-id="${r.id}">
+        <div class="inline-bot-result-icon">${r.bot?.avatar ? '🤖' : '🤖'}</div>
+        <div class="inline-bot-result-content">
+          <div class="inline-bot-result-title">${App.escapeHTML(r.title)}</div>
+          <div class="inline-bot-result-desc">${App.escapeHTML(r.description || r.message_text.slice(0, 60))}</div>
+        </div>
+      </div>
+    `).join('');
+    document.querySelector('.chat-input-bar').appendChild(picker);
+    picker.querySelectorAll('.inline-bot-result').forEach(el => {
+      el.addEventListener('click', () => {
+        const result = results.find(r => r.id == el.dataset.resultId);
+        if (result) callback(result);
+      });
     });
   },
 
@@ -346,7 +350,6 @@ const ChatUI = {
     });
   },
 
-  // ============ Messages ============
   async loadMessages(chatId) {
     const res = await App.api('messages', 'list&chat_id=' + chatId);
     if (res.success) {
@@ -375,7 +378,6 @@ const ChatUI = {
     if (!area) return;
     area.innerHTML = messages.map(m => this.renderMessage(m)).join('');
     area.scrollTop = area.scrollHeight;
-
     area.querySelectorAll('.reaction-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -391,20 +393,20 @@ const ChatUI = {
         this.reactToMessage(parseInt(el.dataset.messageId), '❤️');
       });
     });
-
     if (window.LinkPreviewUI) {
       area.querySelectorAll('.message').forEach(msgEl => {
         const contentEl = msgEl.querySelector('.message-content');
         if (contentEl) LinkPreviewUI.render(contentEl.textContent, msgEl);
       });
     }
-
     area.querySelectorAll('.poll-card').forEach(el => PollUI.bind(el));
   },
 
   renderMessage(m) {
     const isOut = m.sender_id == App.currentUser.id;
+    const isBot = !!m.bot_id;
     const cls = isOut ? 'message-out' : 'message-in';
+    if (isBot) cls += ' bot-message';
     let media = '';
 
     if (m.type === 'image' && m.file_path) {
@@ -444,6 +446,10 @@ const ChatUI = {
       </div>
     ` : '';
 
+    const senderLabel = isBot
+      ? `<div class="bot-sender-label">🤖 <a style="color:var(--gold)">@${App.escapeHTML(m.bot_username || 'bot')}</a></div>`
+      : '';
+
     const reactions = (m.reactions || []).length ? `
       <div class="reactions">
         ${m.reactions.map(r => `<div class="reaction ${r.user_ids && r.user_ids.includes(App.currentUser.id) ? 'active' : ''}">${r.emoji} ${r.count}</div>`).join('')}
@@ -452,6 +458,7 @@ const ChatUI = {
       <div class="message ${cls}" data-message-id="${m.id}">
         ${fwd}
         ${reply}
+        ${senderLabel}
         ${m.content ? `<div class="message-content">${App.escapeHTML(m.content)}</div>` : ''}
         ${media}
         <div class="message-time">${m.is_edited ? 'ویرایش‌شده · ' : ''}${App.formatTime(m.created_at)}</div>
@@ -466,11 +473,22 @@ const ChatUI = {
     if (!text && !App.pendingFile) return;
     if (!App.currentChat) return;
 
+    // Handle built-in commands
+    if (text.startsWith('/')) {
+      const cmdResult = await BotProcessor.processOutgoing(text);
+      if (cmdResult) {
+        if (cmdResult.type === 'system') {
+          input.value = '';
+          App.toast(cmdResult.text, 'info');
+        }
+        return;
+      }
+    }
+
     const fd = new FormData();
     fd.append('chat_id', App.currentChat.id);
     fd.append('content', text);
     if (App.replyTo) fd.append('reply_to_id', App.replyTo.id);
-
     if (App.pendingFile) {
       fd.append('file', App.pendingFile);
       const ext = App.pendingFile.name.split('.').pop().toLowerCase();
@@ -497,6 +515,17 @@ const ChatUI = {
     const res = await App.api('messages', 'send', fd);
     if (res.success) {
       this.appendMessage(res.message);
+      // Append bot responses (if any)
+      if (res.bot_responses && res.bot_responses.length) {
+        res.bot_responses.forEach(botMsg => this.appendMessage({
+          ...botMsg,
+          sender_id: App.currentUser.id,
+          bot_id: botMsg.bot_id,
+          bot_username: 'bot',
+          bot_name: 'Bot',
+          created_at: new Date().toISOString(),
+        }));
+      }
       VoicePlayer.bind();
       this.loadChats();
     } else {
@@ -798,6 +827,7 @@ const ChatUI = {
       <button class="btn-secondary" id="changeThemeBtn" style="width:100%;margin-bottom:8px">🎨 تغییر تم</button>
       <button class="btn-secondary" id="openPushBtn" style="width:100%;margin-bottom:8px">🔔 اعلان‌ها</button>
       <button class="btn-secondary" id="openStatsBtn" style="width:100%;margin-bottom:8px">📊 آمار و تحلیل</button>
+      <button class="btn-secondary" id="openBotsBtn" style="width:100%;margin-bottom:8px">🤖 ربات‌های من</button>
       <button class="btn-secondary" id="editProfile" style="width:100%;margin-bottom:8px">✏ ویرایش پروفایل</button>
       <button class="btn-secondary" id="changePassBtn" style="width:100%;margin-bottom:8px">🔒 تغییر رمز</button>
       <button class="btn-secondary" id="logoutFromPanel" style="width:100%">خروج</button>
@@ -808,6 +838,7 @@ const ChatUI = {
     document.getElementById('changeThemeBtn').addEventListener('click', () => { panel.remove(); ThemeManager.open(); });
     document.getElementById('openPushBtn').addEventListener('click', () => { panel.remove(); PushUI.open(); });
     document.getElementById('openStatsBtn').addEventListener('click', () => { panel.remove(); StatsUI.open(); });
+    document.getElementById('openBotsBtn').addEventListener('click', () => { panel.remove(); BotUI.showMyBots(); });
     document.getElementById('changePassBtn').addEventListener('click', () => this.showChangePassword());
     document.getElementById('logoutFromPanel').addEventListener('click', () => App.logout());
   },
@@ -888,10 +919,10 @@ const ChatUI = {
       const area = document.getElementById('messagesArea');
       if (!area) return;
       const lastMsg = area.querySelector('.message:last-child');
-      const lastId = lastMsg ? parseInt(lastMsg.dataset.messageId) : 0;
+      constlastId = lastMsg ? parseInt(lastMsg.dataset.messageId) : 0;
       const res = await App.api('messages', 'list&chat_id=' + App.currentChat.id + '&limit=10');
       if (res.success) {
-        const newMsgs = res.messages.filter(m => m.id > lastId);
+        const newMsgs = res.messages.filter(m => m.id > lastlastId);
         newMsgs.forEach(m => this.appendMessage(m));
       }
     }, 5000);
