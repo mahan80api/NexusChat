@@ -1,147 +1,94 @@
-# 🌌 NexusChat
+# ✨ NexusChat
 
-یک اپلیکیشن پیام‌رسان حرفه‌ای با **تم کهکشانی 8 بعدی** که با **PHP + MySQL** ساخته شده.
+> پیام‌رسان کیهانی حرفه‌ای — Cosmic Messenger
 
-![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+## 🌟 ویژگی‌ها
 
-## ✨ ویژگی‌ها
+- 💬 چت real-time (Pusher + polling)
+- 📞 تماس صوتی/تصویری WebRTC
+- 🎨 ۸ تم + سازنده تم + فروشگاه
+- 🤖 سیستم ربات با commands
+- 📢 کانال عمومی + موقعیت + جستجوی نزدیک
+- 💰 کیف پول دیجیتال ۷ ارزی + کارت + کریپتو + Escrow
+- 🗳 نظرسنجی
+- 😀 استیکر
+- 🎤 پیام صوتی
+- 🔍 جستجو
+- 🌙 حالت DND
+- 📊 آمار
+- 🔔 Push Notification (FCM)
+- ↪ فوروارد
+- 🔗 پیش‌نمایش لینک
 
-- 💬 **پیام‌رسانی real-time** (خصوصی، گروه، کانال)
-- 🔐 **رمزنگاری End-to-End** (RSA-2048 + AES-256-GCM)
-- 📞 **تماس صوتی و تصویری** (WebRTC - آماده)
-- 📸 **استوری / Status** با انقضای ۲۴ ساعته
-- 🎨 **تم کهکشانی 8D** با particle، glassmorphism و 3D parallax
-- 🌀 **بیش از ۴۰ انیمیشن** مختلف
-- 📁 **اشتراک فایل** (تصویر، ویدیو، سند، پیام صوتی)
-- 👥 **گروه و کانال** با مدیریت ادمین
-- 🔔 **اعلان‌های هوشمند**
-- ⚡ **نشانگر تایپ** و وضعیت آنلاین
-- 📌 **سنجاق پیام** و پاسخ
-- 😊 **ری‌اکشن و ایموجی**
-- 🔍 **جستجوی کاربران**
-- 🌓 **تم‌های روشن/تیره/کهکشانی**
-- 📱 **کاملاً ریسپانسیو** (موبایل، تبلت، دسکتاپ)
+## 🚀 نصب
 
-## 🛠 تکنولوژی‌ها
-
-- **Backend:** PHP 8+ (OOP)
-- **Database:** MySQL 5.7+ / MariaDB
-- **Frontend:** Vanilla JS, CSS3
-- **Real-time:** AJAX Long Polling (هر ۵ ثانیه)
-- **رمزنگاری:** OpenSSL (RSA + AES)
-- **Session:** PHP Sessions
-
-## 🚀 نصب و راه‌اندازی
-
-### پیش‌نیازها
-- PHP 8.0 یا بالاتر
-- MySQL 5.7+ یا MariaDB
-- Apache/Nginx
-- Extension: `pdo_mysql`, `openssl`, `gd`
+### نیازمندی‌ها
+- PHP 8.0+ با pdo_mysql, curl, mbstring, json
+- MySQL 5.7+ / MariaDB 10.3+
+- Apache (mod_rewrite) یا Nginx
 
 ### مراحل
-
-1. **کلون کردن ریپازیتوری:**
-   ```bash
-   git clone https://github.com/mahan80api/NexusChat.git
-   ```
-
-2. **انتقال به htdocs (XAMPP/Laragon):**
-   ```bash
-   mv NexusChat /xampp/htdocs/
-   ```
-
-3. **ایجاد دیتابیس:**
-   - phpmyadmin باز کن
-   - دیتابیس `nexuschat` بساز
-   - فایل `database.sql` را import کن
-
-   یا از ترمینال:
-   ```bash
-   mysql -u root -p < database.sql
-   ```
-
-4. **تنظیمات دیتابیس** (در صورت نیاز):
-   فایل `config/database.php` را ویرایش کن
-
-5. **باز کردن در مرورگر:**
-   ```
-   http://localhost/NexusChat
-   ```
-
-6. **ثبت‌نام و لذت ببرید!** ✨
-
-## 📁 ساختار پروژه
-
+```bash
+git clone https://github.com/mahan80api/NexusChat.git
+cd NexusChat
+chmod +x install.sh
+./install.sh
+php -S 0.0.0.0:8000 -t .
 ```
-NexusChat/
-├── config/              # تنظیمات
-│   ├── database.php
-│   └── config.php
-├── classes/             # کلاس‌های OOP
-│   ├── Database.php
-│   ├── User.php
-│   ├── Chat.php
-│   ├── Message.php
-│   ├── Story.php
-│   ├── Encryption.php
-│   ├── FileUpload.php
-│   └── Notification.php
-├── api/                 # API endpoints
-│   ├── auth.php
-│   ├── chats.php
-│   ├── messages.php
-│   ├── users.php
-│   ├── stories.php
-│   ├── upload.php
-│   └── poll.php
-├── pages/               # صفحات PHP
-│   ├── login.php
-│   ├── register.php
-│   └── chat.php
-├── assets/
-│   ├── css/
-│   │   └── galaxy.css   # تم کهکشانی
-│   ├── js/
-│   │   ├── galaxy.js    # هسته اپ
-│   │   ├── auth.js      # منطق ورود
-│   │   └── chat.js      # منطق چت
-│   └── uploads/         # فایل‌های آپلودی
-├── database.sql         # ساختار دیتابیس
-├── index.php            # Front controller
-└── .htaccess
+باز کنید: http://localhost:8000
+
+## ⚙️ تنظیمات اختیاری
+
+`.env`:
+```
+PUSHER_KEY=xxx
+PUSHER_SECRET=xxx
+PUSHER_APP_ID=xxx
+PUSHER_CLUSTER=mt1
 ```
 
-## 🎨 تم کهکشانی
+برای FCM فایل `config/firebase-service-account.json` را اضافه کنید.
 
-شامل:
-- ⭐ آسمان پرستاره متحرک (۲ لایه با سرعت‌های مختلف)
-- ✨ ذرات شناور (۴۰ ذره با رنگ‌های مختلف)
-- 🌌 انیمیشن nebula در پس‌زمینه
-- 💎 Glassmorphism روی همه کارت‌ها
-- 🌟 گرادیان طلایی-بنفش-فیروزه‌ای
-- 📐 3D Parallax با حرکت ماوس
-- 💫 بیش از ۴۰ انیمیشن CSS
+## 📁 ساختار
 
-## 🔐 امنیت
+```
+api/              # Backend endpoints
+assets/
+  css/            # Stylesheets
+  js/             # Frontend modules
+classes/          # PHP classes
+config/           # Configuration
+db/migrations/    # SQL migrations
+uploads/          # User uploads
+index.php         # Main app
+login.php         # Auth
+sw.js             # Service worker
+```
 
-- رمز عبور با `password_hash` (bcrypt cost 12)
-- Session با HttpOnly و SameSite
-- CSRF protection (recommended to add)
-- SQL Injection محافظت با PDO Prepared Statements
-- XSS محافظت با `htmlspecialchars`
-- E2E Encryption برای پیام‌ها (RSA-2048 + AES-256-GCM)
+## 🔌 API Endpoints
 
-## 📜 مجوز
+- `auth.php` - register, login, logout, me
+- `users.php` - search, contacts, profile, lookup
+- `chats.php` - list, messages, send, react, search
+- `wallet.php` - wallets, transfer, exchange, cards, crypto
+- `channels.php` - list, create, subscribe, nearby
+- `calls.php` - initiate, accept, signal, history
+- `polls.php` - create, vote, close
+- `stickers.php` - packs, create, favorites
+- `bots_api.php` - create, run, add_to_chat
+- `push.php` - subscribe, send
+- `upload.php` - file upload
+- `preview.php` - link preview
+- `voice.php` - voice messages
+- `pusher_auth.php` - Pusher private auth
+- `forward.php` - message forwarding
+- `stats.php` - analytics
+- `bots.php` - bot webhooks
 
-MIT License - استفاده آزاد
+## 🧪 تست
 
-## 👨‍💻 سازنده
+```bash
+php -S 0.0.0.0:8000 -t .
+```
 
-**ماهان** - [@mahan80api](https://github.com/mahan80api)
-
----
-
-> "مکالمات، تجربه‌ای کیهانی می‌شوند" ✨
+ساخت حساب و شروع چت.
