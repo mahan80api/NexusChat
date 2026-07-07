@@ -21,6 +21,7 @@ const ChatUI = {
               <button class="icon-btn" id="savedBtn" title="ذخیره‌شده‌ها">⭐</button>
               <button class="icon-btn" id="themeBtn" title="تم (Ctrl+Shift+T)">🎨</button>
               <button class="icon-btn" id="dndBtn" title="حالت مزاحم نشوید">🌙</button>
+              <button class="icon-btn" id="pushBtn" title="اعلان‌ها (Push)">🔔</button>
               <button class="icon-btn" id="newChatBtn" title="چت جدید">✚</button>
               <button class="icon-btn" id="profileBtn" title="پروفایل">👤</button>
               <button class="icon-btn" id="logoutBtn" title="خروج">⏻</button>
@@ -54,6 +55,7 @@ const ChatUI = {
     document.getElementById('globalSearchBtn').addEventListener('click', () => SearchUI.open());
     document.getElementById('themeBtn').addEventListener('click', () => ThemeManager.open());
     document.getElementById('dndBtn').addEventListener('click', () => DNDManager.toggle());
+    document.getElementById('pushBtn').addEventListener('click', () => PushUI.open());
     document.getElementById('savedBtn').addEventListener('click', () => {
       SearchUI.open();
       setTimeout(() => {
@@ -91,6 +93,17 @@ const ChatUI = {
     };
     updateDndIcon();
     setInterval(updateDndIcon, 1000);
+
+    const updatePushIcon = () => {
+      const btn = document.getElementById('pushBtn');
+      if (btn && window.PushUI) {
+        btn.textContent = PushUI.subscription ? '🔔' : '🔕';
+        btn.style.color = PushUI.subscription ? '' : 'var(--text-dim)';
+        btn.title = PushUI.subscription ? 'Push فعال است - کلیک برای تنظیمات' : 'Push غیرفعال - کلیک برای فعال‌سازی';
+      }
+    };
+    updatePushIcon();
+    setInterval(updatePushIcon, 2000);
   },
 
   toFormData(obj) {
@@ -287,7 +300,7 @@ const ChatUI = {
     document.getElementById('pollBtn').addEventListener('click',   () => this.createPoll());
     document.getElementById('chatInfoBtn').addEventListener('click', () => DNDManager.showChatInfoWithMute(chat));
     document.getElementById('callVoiceBtn').addEventListener('click', () => App.toast('🚧 تماس صوتی - به زودی'));
-    document.getElementById('callVideoBtn').addEventListener('click', () => App.toast('🚧 تماس تصویری - به زودی'));
+    document.getElementById('callVideoBtn').addEventListener('click', () => App.toast('🚧 تماس صوتی - به زودی'));
     document.getElementById('searchInChatBtn').addEventListener('click', () => {
       SearchUI.open();
       setTimeout(() => {
@@ -318,7 +331,6 @@ const ChatUI = {
       this.renderMessages(res.messages);
       VoicePlayer.bind();
       App.api('chats', 'read', this.toFormData({ chat_id: chatId, last_message_id: res.messages.length ? res.messages[res.messages.length-1].id : 0 }));
-      // Load polls separately
       this.loadPollsForMessages(chatId);
     }
   },
@@ -384,7 +396,6 @@ const ChatUI = {
     } else if (m.type === 'poll' && m.metadata) {
       const meta = typeof m.metadata === 'string' ? JSON.parse(m.metadata) : m.metadata;
       if (meta && meta.poll_id) {
-        // Will be replaced async by loadPollsForMessages
         return `<div class="message ${cls}" data-message-id="${m.id}">
           <div class="message-content">${App.escapeHTML(m.content || '📊')}</div>
           <div class="message-time">${App.formatTime(m.created_at)}</div>
@@ -763,6 +774,7 @@ const ChatUI = {
       </div>
       <hr style="margin:20px 0; border-color:var(--glass-border)">
       <button class="btn-secondary" id="changeThemeBtn" style="width:100%;margin-bottom:8px">🎨 تغییر تم</button>
+      <button class="btn-secondary" id="openPushBtn" style="width:100%;margin-bottom:8px">🔔 اعلان‌ها</button>
       <button class="btn-secondary" id="editProfile" style="width:100%;margin-bottom:8px">✏ ویرایش پروفایل</button>
       <button class="btn-secondary" id="changePassBtn" style="width:100%;margin-bottom:8px">🔒 تغییر رمز</button>
       <button class="btn-secondary" id="logoutFromPanel" style="width:100%">خروج</button>
@@ -771,6 +783,7 @@ const ChatUI = {
     document.getElementById('closeProfile').addEventListener('click', () => panel.remove());
     document.getElementById('editProfile').addEventListener('click', () => this.showEditProfile());
     document.getElementById('changeThemeBtn').addEventListener('click', () => { panel.remove(); ThemeManager.open(); });
+    document.getElementById('openPushBtn').addEventListener('click', () => { panel.remove(); PushUI.open(); });
     document.getElementById('changePassBtn').addEventListener('click', () => this.showChangePassword());
     document.getElementById('logoutFromPanel').addEventListener('click', () => App.logout());
   },
